@@ -128,10 +128,11 @@ def translate_title(title: str) -> str:
 
 
 def translate_summary(summary: str) -> str:
-    """Translate summary to Chinese using Google Translate."""
+    """Translate summary to Chinese using Google Translate. Strips HTML first."""
     if not summary:
         return summary
-    return google_translate(summary)
+    clean = _strip_html(summary)
+    return google_translate(clean)
 
 
 def translate_source(source: str) -> str:
@@ -142,9 +143,12 @@ def translate_source(source: str) -> str:
 def translate_news_item(item: dict) -> dict:
     """Translate a news item dict in-place. Always re-translates title and source;
     only translates summary_zh if it's missing or still identical to English."""
-    summary_zh = item.get("summary_zh", "")
     summary_en = item.get("summary", "")
+    if "<" in summary_en:
+        summary_en = _strip_html(summary_en)
+        item["summary"] = summary_en
 
+    summary_zh = item.get("summary_zh", "")
     needs_summary_translation = (
         not summary_zh
         or summary_zh == summary_en
@@ -159,6 +163,17 @@ def translate_news_item(item: dict) -> dict:
 
 
 def _looks_garbled(text: str) -> bool:
-    """Detect garbled translations from the old TERM_MAP approach."""
-    markers = ["SEC(证监会)", "BSP(央行)", "人工智能(AI)", "先买后付(BNPL)", "中小微企业(MSME)"]
+    """Detect garbled or HTML-contaminated translations."""
+    markers = [
+        "SEC(证监会)", "BSP(央行)", "人工智能(AI)", "先买后付(BNPL)", "中小微企业(MSME)",
+        "<一href", "<一个href", "&nbsp;", "target=\"_blank\"", "<font color",
+    ]
     return any(m in text for m in markers)
+
+
+def _strip_html(text: str) -> str:
+    """Strip HTML tags from text before translation."""
+    if "<" in text:
+        from bs4 import BeautifulSoup
+        return BeautifulSoup(text, "html.parser").get_text()
+    return text

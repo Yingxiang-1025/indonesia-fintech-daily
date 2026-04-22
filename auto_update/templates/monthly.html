@@ -51,7 +51,7 @@
         <h3>{{ month_str }} | 当月要闻 ({{ monthly_news | length }} 条)</h3>
         <ul style="list-style:none; padding:0; margin:0.5rem 0 0;">
             {% for item in monthly_major[:5] %}
-            <li style="padding:0.3rem 0; font-size:0.88rem; color:#78350f;"><strong>{{ loop.index }}.</strong> <a href="{{ item.url }}" target="_blank" style="color:#78350f;">{{ item.title_zh or item.title }}</a></li>
+            <li style="padding:0.3rem 0; font-size:0.88rem; color:#78350f;"><strong>{{ loop.index }}.</strong> <span style="color:#9a8264; font-size:0.78rem;">[{{ item.published }}]</span> <a href="{{ item.url }}" target="_blank" style="color:#78350f;">{{ item.title_zh or item.title }}</a></li>
             {% endfor %}
         </ul>
     </div>
