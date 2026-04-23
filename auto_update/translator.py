@@ -141,24 +141,29 @@ def translate_source(source: str) -> str:
 
 
 def translate_news_item(item: dict) -> dict:
-    """Translate a news item dict in-place. Always re-translates title and source;
-    only translates summary_zh if it's missing or still identical to English."""
+    """Translate a news item dict in-place. Skips items that already have
+    good translations to avoid unnecessary API calls and rate limits."""
     summary_en = item.get("summary", "")
     if "<" in summary_en:
         summary_en = _strip_html(summary_en)
         item["summary"] = summary_en
 
     summary_zh = item.get("summary_zh", "")
-    needs_summary_translation = (
+    needs_summary = (
         not summary_zh
         or summary_zh == summary_en
         or _looks_garbled(summary_zh)
     )
-    if needs_summary_translation:
+    if needs_summary:
         item["summary_zh"] = translate_summary(summary_en)
 
-    item["title_zh"] = translate_title(item.get("title", ""))
-    item["source_zh"] = translate_source(item.get("source", ""))
+    title_zh = item.get("title_zh", "")
+    if not title_zh or title_zh == item.get("title", ""):
+        item["title_zh"] = translate_title(item.get("title", ""))
+
+    if not item.get("source_zh"):
+        item["source_zh"] = translate_source(item.get("source", ""))
+
     return item
 
 
