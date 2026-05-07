@@ -117,6 +117,13 @@ GLOBAL_KEYWORDS = [
     "dompet digital", "neobank",
 ]
 
+EXCLUDE_KEYWORDS = [
+    "PAYPAYA", "เพย์พาญ่า", "Bank of Thailand", "BOT Thailand",
+    "PromptPay", "TrueMoney", "กู้เงิน", "สินเชื่อ",
+    "BSP Philippines", "Bangko Sentral", "Philippines fintech",
+    "UnionBank Philippines", "GCash", "Maya Philippines",
+]
+
 # ─── Section → HTML page mapping ────────────────────────
 SECTION_PAGES = {
     "regulation": "regulation.html",
