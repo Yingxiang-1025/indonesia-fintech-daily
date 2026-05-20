@@ -23,48 +23,75 @@ SERPAPI_KEY = os.getenv("SERPAPI_KEY", "")
 
 # ─── RSS Feeds ───────────────────────────────────────────
 RSS_FEEDS = [
-    # Verified working (2026-05-20)
+    # Indonesian mainstream financial media
     {"name": "CNBC Indonesia Tech", "url": "https://www.cnbcindonesia.com/tech/rss", "category": "fintech"},
     {"name": "CNBC ID Finance", "url": "https://www.cnbcindonesia.com/market/rss", "category": "mainstream"},
     {"name": "DailySocial", "url": "https://dailysocial.id/feed", "category": "fintech"},
     {"name": "Katadata", "url": "https://katadata.co.id/rss", "category": "mainstream"},
     {"name": "Tempo Business", "url": "https://rss.tempo.co/bisnis", "category": "mainstream"},
     {"name": "Detik Finance", "url": "https://finance.detik.com/rss", "category": "mainstream"},
+    {"name": "Bisnis.com", "url": "https://www.bisnis.com/rss", "category": "mainstream"},
+    {"name": "Kontan", "url": "https://www.kontan.co.id/rss", "category": "mainstream"},
+    {"name": "Kompas Tech", "url": "https://tekno.kompas.com/rss", "category": "mainstream"},
+    {"name": "Liputan6 Bisnis", "url": "https://www.liputan6.com/feed/rss2/bisnis", "category": "mainstream"},
+    {"name": "IDN Times Business", "url": "https://www.idntimes.com/rss/business", "category": "mainstream"},
+    # Regional / English fintech media
     {"name": "Fintech News SG", "url": "https://fintechnews.sg/feed/", "category": "fintech"},
     {"name": "Fintech News MY", "url": "https://fintechnews.my/feed/", "category": "fintech"},
     {"name": "e27", "url": "https://e27.co/feed/", "category": "fintech"},
+    {"name": "Tech in Asia", "url": "https://www.techinasia.com/feed", "category": "fintech"},
 ]
 
 # ─── Web Search Queries (run daily) ─────────────────────
 SEARCH_QUERIES = [
-    # General fintech
-    "Indonesia fintech lending news",
-    "Indonesia P2P lending OJK 2026",
-    "Indonesia BNPL paylater news",
-    "Indonesia digital bank news",
-    "Indonesia cash loan pinjaman online",
-    # Brand tracking - English
+    # ── Akulaku Group (highest priority) ──
     "Akulaku Indonesia news 2026",
     "PT Akulaku Finance Indonesia",
     "Akulaku BNPL growth Indonesia",
     "Akulaku Asetku Silvrr fintech",
-    "Kredivo Indonesia news",
-    "Home Credit Indonesia fintech",
-    "ShopeePay Indonesia news",
-    "GoPay OVO digital payment Indonesia",
-    "GoPayLater paylater Indonesia",
-    "Indodana Atome Indonesia",
-    # Brand tracking - Indonesian
-    "Akulaku berita terbaru",
-    "Kredivo pinjaman Indonesia",
-    "pinjol legal OJK terdaftar 2026",
-    # OJK regulatory depth
+    "Akulaku berita terbaru Indonesia",
+    "Akulaku OneAsia fintech Indonesia",
+    "Akulaku multifinance OJK",
+    # ── OJK & Regulation ──
     "OJK fintech regulation 2026",
     "OJK sanksi fintech lending",
     "OJK daftar P2P lending terbaru",
-    # Indonesian language queries
+    "OJK kebijakan pinjol terbaru 2026",
+    "Bank Indonesia pembayaran digital 2026",
+    # ── Peer brands - English ──
+    "Kredivo Indonesia news 2026",
+    "Home Credit Indonesia fintech news",
+    "ShopeePay Indonesia news 2026",
+    "GoPaylater GoPayLater Indonesia",
+    "DANA e-wallet Indonesia news",
+    "OVO digital payment Indonesia 2026",
+    "LinkAja Indonesia digital payment",
+    "Indodana Atome Indonesia BNPL",
+    "Kredit Pintar AdaKami Indonesia",
+    "JULO fintech lending Indonesia",
+    "Bank Jago Sea Bank digital Indonesia",
+    # ── Peer brands - Indonesian ──
+    "Kredivo pinjaman Indonesia terbaru",
+    "ShopeePay promo terbaru Indonesia",
+    "GoPay QRIS pembayaran digital",
+    "DANA dompet digital terbaru",
+    "OVO promo cashback Indonesia",
+    "Home Credit cicilan Indonesia",
+    # ── General fintech - English ──
+    "Indonesia fintech lending news",
+    "Indonesia P2P lending OJK 2026",
+    "Indonesia BNPL paylater news 2026",
+    "Indonesia digital bank news 2026",
+    "Indonesia cash loan pinjaman online",
+    # ── General fintech - Indonesian ──
+    "pinjaman online OJK terdaftar 2026",
     "fintek Indonesia berita terbaru",
+    "BNPL Indonesia berita terbaru",
+    "dompet digital Indonesia 2026",
+    "pinjol legal OJK terbaru",
+    "kredit digital Indonesia fintek",
     "pembayaran digital QRIS Indonesia",
+    "bank digital Indonesia terbaru",
 ]
 
 # ─── Keyword Filters ────────────────────────────────────
@@ -99,43 +126,54 @@ SECTION_KEYWORDS = {
         "digital bank", "Bank Jago", "Allo Bank", "Bank Neo Commerce", "Sea Bank", "SuperBank", "neobank",
     ],
     "akulaku": [
-        "Akulaku", "akulaku", "Asetku", "asetku", "Silvrr",
+        "Akulaku", "akulaku", "Asetku", "asetku", "Silvrr", "silvrr",
+        "OneAsia", "oneasia", "PT Pintar Inovasi Digital",
+        "PT Akulaku Finance",
     ],
 }
 
 # Global relevance filter: article must match at least 1 keyword
 GLOBAL_KEYWORDS = [
-    # English
+    # English core
     "fintech", "lending", "pinjaman", "kredit", "digital bank", "e-wallet",
-    "BNPL", "paylater", "GoPay", "OVO",
-    "Akulaku", "Asetku", "Kredivo", "OJK", "Bank Indonesia", "QRIS",
+    "BNPL", "paylater", "GoPay",
+    "OJK", "Bank Indonesia", "QRIS",
     "P2P", "fintech lending", "digital payment", "dompet digital", "neobank",
-    # Brands
-    "ShopeePay", "GoPayLater", "LinkAja", "Indodana", "Atome", "Home Credit",
-    "Bank Jago", "Sea Bank", "Allo Bank", "AdaKami", "Kredit Pintar",
+    # Akulaku group
+    "Akulaku", "Asetku", "Silvrr", "OneAsia",
+    "PT Akulaku Finance", "PT Pintar Inovasi Digital",
+    # Peer brands - BNPL / lending
+    "Kredivo", "Home Credit", "GoPayLater", "GoPaylater", "Indodana", "Atome",
+    "AdaKami", "Kredit Pintar", "JULO", "UangTeman", "Tunaiku",
+    # Peer brands - e-wallet / payment
+    "ShopeePay", "LinkAja", "Sea Money",
+    # Peer brands - digital bank
+    "Bank Jago", "Sea Bank", "Allo Bank", "SuperBank",
+    # Peer brands - P2P / SME lending
     "Danamas", "Amartha", "KoinWorks", "Modalku", "Investree",
-    "PT Akulaku Finance",
     # Indonesian
     "pinjol", "fintek", "bank digital", "pembayaran digital",
     "kartu kredit", "pinjaman online", "suku bunga",
     "regulasi keuangan", "inklusi keuangan", "teknologi keuangan",
+    "cicilan", "kredit digital",
 ]
 
 # Keywords that require word-boundary matching to avoid false positives
-# e.g. "DANA" should not match "Danantara"
-WORD_BOUNDARY_KEYWORDS = ["DANA"]
+WORD_BOUNDARY_KEYWORDS = ["DANA", "OVO", "JULO"]
 
 # Indonesia geographic keywords — used to filter regional sources
 INDONESIA_GEO_KEYWORDS = [
     "indonesia", "indonesian", "jakarta", "ojk", "rupiah",
     "印尼", "印度尼西亚", "雅加达",
-    "tokopedia", "gojek", "goto", "bukalapak",
-    "bank indonesia", "ihsg",
-    "akulaku", "asetku", "kredivo", "adakami", "kredit pintar",
-    "gopay", "shopeepay", "linkaja", "dana indonesia",
-    "pinjol", "pinjaman online", "fintek",
-    "bank jago", "sea bank", "allo bank", "superbank",
+    "tokopedia", "gojek", "goto", "bukalapak", "shopee indonesia",
+    "bank indonesia", "ihsg", "kemenkominfo",
+    "akulaku", "asetku", "silvrr", "oneasia", "kredivo", "adakami", "kredit pintar",
+    "gopay", "shopeepay", "linkaja", "dana indonesia", "sea money",
+    "home credit indonesia", "indodana", "atome indonesia",
+    "pinjol", "pinjaman online", "fintek", "cicilan",
+    "bank jago", "sea bank", "allo bank", "superbank", "bank neo commerce",
     "koinworks", "modalku", "investree", "amartha", "danamas",
+    "julo", "uangteman", "tunaiku",
 ]
 # Short keywords that need word-boundary matching to avoid substring false positives
 INDONESIA_GEO_WORD_BOUNDARY = ["bri", "bni", "bca", "ovo", "idr", "idx"]

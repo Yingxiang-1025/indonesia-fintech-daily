@@ -273,68 +273,80 @@ def _search_serpapi(queries: list) -> list[NewsItem]:
 
 
 def _search_google_news_rss(queries: list) -> list[NewsItem]:
-    """Fallback: use Google News RSS (free, no API key needed)."""
+    """Fallback: use Google News RSS (free, no API key needed).
+    Searches in both English and Indonesian to maximize coverage."""
     items = []
     seen_urls = set()
 
     for query in queries:
-        try:
-            from urllib.parse import quote
-            encoded_query = quote(query + " Indonesia")
-            rss_url = (
-                f"https://news.google.com/rss/search?q={encoded_query}&hl=en&gl=ID&ceid=ID:en"
-            )
-            feed = feedparser.parse(rss_url)
+        # Detect if query is already Indonesian (contains common ID words)
+        id_markers = ["berita", "terbaru", "pinjol", "pinjaman", "dompet", "cicilan",
+                       "pembayaran", "fintek", "terdaftar", "kebijakan", "sanksi"]
+        is_indonesian = any(m in query.lower() for m in id_markers)
+        if is_indonesian:
+            lang_configs = [("id", "id", "ID:id")]
+        else:
+            lang_configs = [("en", "ID", "ID:en")]
 
-            for entry in feed.entries[:8]:
-                gn_url = entry.get("link", "")
-                if gn_url in seen_urls:
-                    continue
-                seen_urls.add(gn_url)
-
-                if not (
-                    hasattr(entry, "published_parsed") and entry.published_parsed
-                ):
-                    continue
-                dt_pub = datetime(*entry.published_parsed[:6])
-                if dt_pub.year < 2026:
-                    continue
-                pub_date = dt_pub.strftime("%Y-%m-%d")
-
-                actual_url = _resolve_google_news_url(gn_url)
-                url_date = _extract_date_from_url(actual_url)
-                if url_date and url_date != pub_date:
-                    url_year = int(url_date[:4])
-                    if url_year < 2026:
-                        logger.info(f"Skip old article (url_date={url_date}): {entry.get('title','')[:50]}")
-                        continue
-                    pub_date = url_date
-
-                raw_summary = entry.get("summary", "").strip()
-                if "<" in raw_summary:
-                    from bs4 import BeautifulSoup
-                    raw_summary = BeautifulSoup(raw_summary, "html.parser").get_text()
-                raw_summary = raw_summary[:500]
-
-                title_text = entry.get("title", "").strip()
-                gn_source = entry.get("source", {}).get("title", "Google News")
-                if not _is_relevant(title_text, raw_summary, source=gn_source):
-                    continue
-                if _url_date_conflicts(actual_url, pub_date):
-                    continue
-                item = NewsItem(
-                    title=title_text,
-                    url=actual_url if actual_url != gn_url else gn_url,
-                    summary=raw_summary,
-                    source=gn_source,
-                    published=pub_date,
+        for hl, gl, ceid in lang_configs:
+            try:
+                from urllib.parse import quote
+                suffix = "" if is_indonesian else " Indonesia"
+                encoded_query = quote(query + suffix)
+                rss_url = (
+                    f"https://news.google.com/rss/search?q={encoded_query}&hl={hl}&gl={gl}&ceid={ceid}"
                 )
-                items.append(item)
+                feed = feedparser.parse(rss_url)
 
-            time.sleep(0.5)
+                for entry in feed.entries[:10]:
+                    gn_url = entry.get("link", "")
+                    if gn_url in seen_urls:
+                        continue
+                    seen_urls.add(gn_url)
 
-        except Exception as e:
-            logger.warning(f"Google News RSS search failed for '{query}': {e}")
+                    if not (
+                        hasattr(entry, "published_parsed") and entry.published_parsed
+                    ):
+                        continue
+                    dt_pub = datetime(*entry.published_parsed[:6])
+                    if dt_pub.year < 2026:
+                        continue
+                    pub_date = dt_pub.strftime("%Y-%m-%d")
+
+                    actual_url = _resolve_google_news_url(gn_url)
+                    url_date = _extract_date_from_url(actual_url)
+                    if url_date and url_date != pub_date:
+                        url_year = int(url_date[:4])
+                        if url_year < 2026:
+                            logger.info(f"Skip old article (url_date={url_date}): {entry.get('title','')[:50]}")
+                            continue
+                        pub_date = url_date
+
+                    raw_summary = entry.get("summary", "").strip()
+                    if "<" in raw_summary:
+                        from bs4 import BeautifulSoup
+                        raw_summary = BeautifulSoup(raw_summary, "html.parser").get_text()
+                    raw_summary = raw_summary[:500]
+
+                    title_text = entry.get("title", "").strip()
+                    gn_source = entry.get("source", {}).get("title", "Google News")
+                    if not _is_relevant(title_text, raw_summary, source=gn_source):
+                        continue
+                    if _url_date_conflicts(actual_url, pub_date):
+                        continue
+                    item = NewsItem(
+                        title=title_text,
+                        url=actual_url if actual_url != gn_url else gn_url,
+                        summary=raw_summary,
+                        source=gn_source,
+                        published=pub_date,
+                    )
+                    items.append(item)
+
+                time.sleep(0.5)
+
+            except Exception as e:
+                logger.warning(f"Google News RSS search failed for '{query}': {e}")
 
     return items
 

@@ -25,28 +25,28 @@ WECHAT_WEBHOOK_URL = (
 WEBSITE_URL = "https://yingxiang-1025.github.io/indonesia-fintech-daily/"
 
 SECTION_META = {
-    "akulaku":        {"priority": 0, "label": "Akulaku/Asetku", "emoji": "🏦", "show_all": True},
+    "akulaku":        {"priority": 0, "label": "🔥 Akulaku集团", "emoji": "🔥", "show_all": True},
     "regulation":     {"priority": 1, "label": "监管动态",       "emoji": "📋", "show_all": True},
-    "credit_card":    {"priority": 2, "label": "信用卡",         "emoji": "💳", "show_all": False},
-    "digital_lending":{"priority": 3, "label": "数字信贷",       "emoji": "💰", "show_all": False},
-    "cash_loan":      {"priority": 4, "label": "现金贷",         "emoji": "💵", "show_all": False},
-    "p2p_lending":    {"priority": 5, "label": "P2P借贷",        "emoji": "🤝", "show_all": False},
-    "bnpl":           {"priority": 6, "label": "先买后付",       "emoji": "🛒", "show_all": False},
-    "e_wallet":       {"priority": 7, "label": "电子钱包",       "emoji": "📲", "show_all": False},
+    "bnpl":           {"priority": 2, "label": "BNPL同行",       "emoji": "🛒", "show_all": True},
+    "e_wallet":       {"priority": 3, "label": "电子钱包",       "emoji": "📲", "show_all": True},
+    "cash_loan":      {"priority": 4, "label": "现金贷",         "emoji": "💵", "show_all": True},
+    "digital_lending":{"priority": 5, "label": "数字信贷",       "emoji": "💰", "show_all": False},
+    "p2p_lending":    {"priority": 6, "label": "P2P借贷",        "emoji": "🤝", "show_all": False},
+    "credit_card":    {"priority": 7, "label": "信用卡",         "emoji": "💳", "show_all": False},
     "digital_bank":   {"priority": 8, "label": "数字银行",       "emoji": "📱", "show_all": False},
 }
 
 _DEFAULT_META = {"priority": 99, "label": "金融科技", "emoji": "📊", "show_all": False}
 
 CONNECTORS = {
-    "akulaku": "Akulaku/Asetku方面，",
+    "akulaku": "Akulaku集团方面，",
     "regulation": "监管层面，",
-    "credit_card": "信用卡领域，",
-    "digital_lending": "数字信贷方面，",
-    "cash_loan": "现金贷方面，",
-    "p2p_lending": "P2P借贷方面，",
-    "bnpl": "先买后付（BNPL）方面，",
+    "bnpl": "BNPL/同行竞品方面，",
     "e_wallet": "电子钱包领域，",
+    "cash_loan": "现金贷方面，",
+    "digital_lending": "数字信贷方面，",
+    "p2p_lending": "P2P借贷方面，",
+    "credit_card": "信用卡领域，",
     "digital_bank": "数字银行领域，",
 }
 

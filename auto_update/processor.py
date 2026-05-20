@@ -26,7 +26,9 @@ def assign_sections(items: list[NewsItem]) -> list[NewsItem]:
                 matched.append(section)
         item.sections = matched if matched else ["digital_lending"]
 
-        if "akulaku" in text or "asetku" in text:
+        akulaku_group = ["akulaku", "asetku", "silvrr", "oneasia",
+                         "pt pintar inovasi digital", "pt akulaku finance"]
+        if any(kw in text for kw in akulaku_group):
             if "akulaku" not in item.sections:
                 item.sections.append("akulaku")
 
@@ -88,17 +90,21 @@ def generate_summaries_zh(items: list[NewsItem]) -> list[NewsItem]:
     return items
 
 
-def mark_major_news(items: list[NewsItem], top_n: int = 3) -> list[NewsItem]:
+def mark_major_news(items: list[NewsItem], top_n: int = 5) -> list[NewsItem]:
     """
     Mark the top N most important news as major.
-    Priority: Akulaku > regulation > funding > product > market.
+    Priority: Akulaku group > regulation > peer brands > funding > other.
     """
     priority_keywords = {
-        5: ["Akulaku", "akulaku"],
-        4: ["regulation", "OJK", "Bank Indonesia", "moratorium", "ban", "regulasi"],
-        3: ["$", "million", "billion", "funding", "raises", "investment"],
-        2: ["launch", "introduce", "new product", "partnership"],
-        1: ["growth", "market", "report"],
+        5: ["Akulaku", "akulaku", "Asetku", "asetku", "Silvrr", "OneAsia",
+            "PT Akulaku Finance", "PT Pintar Inovasi Digital"],
+        4: ["regulation", "OJK", "Bank Indonesia", "moratorium", "ban", "regulasi",
+            "sanksi", "POJK"],
+        3: ["Kredivo", "Home Credit", "GoPaylater", "GoPayLater", "ShopeePay",
+            "LinkAja", "Indodana", "Atome", "AdaKami", "Kredit Pintar", "JULO",
+            "Bank Jago", "Sea Bank"],
+        2: ["$", "million", "billion", "funding", "raises", "investment"],
+        1: ["growth", "market", "report", "launch", "partnership"],
     }
 
     scored: list[tuple[int, NewsItem]] = []
