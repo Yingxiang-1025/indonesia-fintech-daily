@@ -109,7 +109,7 @@ class NewsItem:
         return cls(**data)
 
 
-def fetch_rss_feeds(max_age_days: int = 7) -> list[NewsItem]:
+def fetch_rss_feeds(max_age_days: int = 14) -> list[NewsItem]:
     """Fetch news from configured RSS feeds."""
     items = []
     cutoff = datetime.now() - timedelta(days=max_age_days)
@@ -264,7 +264,7 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
             )
             feed = feedparser.parse(rss_url)
 
-            for entry in feed.entries[:5]:
+            for entry in feed.entries[:8]:
                 gn_url = entry.get("link", "")
                 if gn_url in seen_urls:
                     continue
@@ -318,13 +318,20 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
 
 def _is_relevant(title: str, summary: str) -> bool:
     """Check if article is relevant to Indonesia fintech.
-    Requires at least 2 keyword matches and no cross-country exclusions."""
+    Requires at least 1 keyword match and no cross-country exclusions."""
     text = (title + " " + summary).lower()
     for ex in EXCLUDE_KEYWORDS:
         if ex.lower() in text:
             return False
-    matches = sum(1 for kw in GLOBAL_KEYWORDS if kw.lower() in text)
-    return matches >= 2
+    from config import WORD_BOUNDARY_KEYWORDS
+    for kw in GLOBAL_KEYWORDS:
+        kw_lower = kw.lower()
+        if kw in WORD_BOUNDARY_KEYWORDS:
+            if re.search(r'\b' + re.escape(kw_lower) + r'\b', text):
+                return True
+        elif kw_lower in text:
+            return True
+    return False
 
 
 def load_existing_news() -> list[dict]:

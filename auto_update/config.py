@@ -23,54 +23,45 @@ SERPAPI_KEY = os.getenv("SERPAPI_KEY", "")
 
 # ─── RSS Feeds ───────────────────────────────────────────
 RSS_FEEDS = [
-    {
-        "name": "Kontan",
-        "url": "https://www.kontan.co.id/rss",
-        "category": "mainstream",
-    },
-    {
-        "name": "Bisnis.com",
-        "url": "https://rss.bisnis.com/finansial",
-        "category": "mainstream",
-    },
-    {
-        "name": "CNBC Indonesia",
-        "url": "https://www.cnbcindonesia.com/tech/rss",
-        "category": "fintech",
-    },
-    {
-        "name": "DailySocial",
-        "url": "https://dailysocial.id/feed",
-        "category": "fintech",
-    },
-    {
-        "name": "Tech in Asia",
-        "url": "https://www.techinasia.com/feed",
-        "category": "fintech",
-    },
-    {
-        "name": "Katadata",
-        "url": "https://katadata.co.id/rss",
-        "category": "mainstream",
-    },
-    {
-        "name": "Detik Finance",
-        "url": "https://finance.detik.com/indeks/rss",
-        "category": "mainstream",
-    },
+    # Verified working (2026-05-20)
+    {"name": "CNBC Indonesia Tech", "url": "https://www.cnbcindonesia.com/tech/rss", "category": "fintech"},
+    {"name": "CNBC ID Finance", "url": "https://www.cnbcindonesia.com/market/rss", "category": "mainstream"},
+    {"name": "DailySocial", "url": "https://dailysocial.id/feed", "category": "fintech"},
+    {"name": "Katadata", "url": "https://katadata.co.id/rss", "category": "mainstream"},
+    {"name": "Tempo Business", "url": "https://rss.tempo.co/bisnis", "category": "mainstream"},
+    {"name": "Detik Finance", "url": "https://finance.detik.com/rss", "category": "mainstream"},
+    {"name": "Fintech News SG", "url": "https://fintechnews.sg/feed/", "category": "fintech"},
+    {"name": "Fintech News MY", "url": "https://fintechnews.my/feed/", "category": "fintech"},
+    {"name": "e27", "url": "https://e27.co/feed/", "category": "fintech"},
 ]
 
 # ─── Web Search Queries (run daily) ─────────────────────
 SEARCH_QUERIES = [
+    # General fintech
     "Indonesia fintech lending news",
     "Indonesia P2P lending OJK 2026",
     "Indonesia BNPL paylater news",
-    "Akulaku Indonesia news",
-    "Asetku Indonesia",
-    "GoPay OVO DANA fintech Indonesia",
     "Indonesia digital bank news",
-    "OJK fintech regulation 2026",
     "Indonesia cash loan pinjaman online",
+    # Brand tracking - English
+    "Akulaku Indonesia news",
+    "Kredivo Indonesia news",
+    "Home Credit Indonesia fintech",
+    "ShopeePay Indonesia news",
+    "GoPay OVO digital payment Indonesia",
+    "GoPayLater paylater Indonesia",
+    "Indodana Atome Indonesia",
+    # Brand tracking - Indonesian
+    "Akulaku berita terbaru",
+    "Kredivo pinjaman Indonesia",
+    "pinjol legal OJK terdaftar 2026",
+    # OJK regulatory depth
+    "OJK fintech regulation 2026",
+    "OJK sanksi fintech lending",
+    "OJK daftar P2P lending terbaru",
+    # Indonesian language queries
+    "fintek Indonesia berita terbaru",
+    "pembayaran digital QRIS Indonesia",
 ]
 
 # ─── Keyword Filters ────────────────────────────────────
@@ -109,13 +100,26 @@ SECTION_KEYWORDS = {
     ],
 }
 
-# Global relevance filter: an article must contain at least ONE of these
-# (kept specific to fintech/finance to avoid noise like mining, politics, etc.)
+# Global relevance filter: article must match at least 1 keyword
 GLOBAL_KEYWORDS = [
-    "fintech", "lending", "pinjaman", "kredit", "digital bank", "e-wallet", "BNPL", "paylater", "GoPay", "OVO", "DANA",
-    "Akulaku", "Asetku", "Kredivo", "OJK", "Bank Indonesia", "QRIS", "P2P", "fintech lending", "digital payment",
-    "dompet digital", "neobank",
+    # English
+    "fintech", "lending", "pinjaman", "kredit", "digital bank", "e-wallet",
+    "BNPL", "paylater", "GoPay", "OVO",
+    "Akulaku", "Asetku", "Kredivo", "OJK", "Bank Indonesia", "QRIS",
+    "P2P", "fintech lending", "digital payment", "dompet digital", "neobank",
+    # Brands
+    "ShopeePay", "GoPayLater", "LinkAja", "Indodana", "Atome", "Home Credit",
+    "Bank Jago", "Sea Bank", "Allo Bank", "AdaKami", "Kredit Pintar",
+    "Danamas", "Amartha", "KoinWorks", "Modalku", "Investree",
+    # Indonesian
+    "pinjol", "fintek", "bank digital", "pembayaran digital",
+    "kartu kredit", "pinjaman online", "suku bunga",
+    "regulasi keuangan", "inklusi keuangan", "teknologi keuangan",
 ]
+
+# Keywords that require word-boundary matching to avoid false positives
+# e.g. "DANA" should not match "Danantara"
+WORD_BOUNDARY_KEYWORDS = ["DANA"]
 
 EXCLUDE_KEYWORDS = [
     "PAYPAYA", "เพย์พาญ่า", "Bank of Thailand", "BOT Thailand",

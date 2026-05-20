@@ -53,11 +53,20 @@ def run_update(dry_run: bool = False):
             logger.info(f"Loaded {len(existing)} seed news items")
     logger.info(f"Existing news items: {len(existing)}")
 
-    # 2. Fetch new articles
-    rss_items = fetch_rss_feeds(max_age_days=7)
+    # 2. Fetch new articles (14-day lookback)
+    rss_items = fetch_rss_feeds(max_age_days=14)
     search_items = search_web()
     all_new = rss_items + search_items
     logger.info(f"Fetched {len(all_new)} new articles (RSS: {len(rss_items)}, Search: {len(search_items)})")
+
+    # Adaptive: if very few results, retry with broader window
+    if len(all_new) < 3:
+        logger.info("Few results — retrying RSS with 30-day lookback")
+        rss_extra = fetch_rss_feeds(max_age_days=30)
+        new_urls = {item.url for item in all_new}
+        rss_extra = [i for i in rss_extra if i.url not in new_urls]
+        all_new.extend(rss_extra)
+        logger.info(f"After adaptive retry: {len(all_new)} total")
 
     # 3. Deduplicate
     unique_new = deduplicate(all_new, existing)
