@@ -154,11 +154,15 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
         "section_names": SECTION_DISPLAY_NAMES,
     }
 
-    # Group news by section
+    # Group news by section (items in akulaku section are excluded from other sections)
     sections = {key: [] for key in SECTION_PAGES}
     for item in news_items:
-        for sec in item.get("sections", []):
+        item_sections = item.get("sections", [])
+        is_akulaku = "akulaku" in item_sections
+        for sec in item_sections:
             if sec in sections:
+                if is_akulaku and sec != "akulaku":
+                    continue
                 sections[sec].append(item)
 
     # Sort each section by date (newest first)
@@ -259,7 +263,8 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
 
 def _append_dynamic_news_to_curated(output_path: Path, section_news: list, context: dict):
     """Append dynamically fetched news to a curated HTML page.
-    Replaces any previous dynamic section, keeping the curated content intact."""
+    Replaces any previous dynamic section, keeping the curated content intact.
+    Content is placed inside the .container div to match curated page format."""
     try:
         content = output_path.read_text(encoding="utf-8")
     except Exception:
@@ -272,16 +277,19 @@ def _append_dynamic_news_to_curated(output_path: Path, section_news: list, conte
         before = content.split(marker_start)[0]
         after = content.split(marker_end)[-1] if marker_end in content else ""
     else:
-        before = content.replace("</div>\n\n<div class=\"footer\">",
-                                  "</div>\n\n<!-- INSERT -->\n<div class=\"footer\">")
-        if "<!-- INSERT -->" in before:
-            parts = before.split("<!-- INSERT -->")
-            before = parts[0]
-            after = parts[1] if len(parts) > 1 else ""
-            after = "<div class=\"footer\">" + after.split("<div class=\"footer\">", 1)[-1] if "<div class=\"footer\">" in after else after
+        footer_marker = '<div class="footer">'
+        if footer_marker in content:
+            idx = content.rfind(footer_marker)
+            before_footer = content[:idx].rstrip()
+            if before_footer.endswith("</div>"):
+                before = before_footer[:-len("</div>")] + "\n\n"
+                after = "\n</div>\n\n" + content[idx:]
+            else:
+                before = before_footer + "\n\n"
+                after = "\n" + content[idx:]
         else:
-            before = content.rsplit("<div class=\"footer\">", 1)[0]
-            after = "<div class=\"footer\">" + content.rsplit("<div class=\"footer\">", 1)[-1] if "<div class=\"footer\">" in content else ""
+            before = content
+            after = ""
 
     if not section_news:
         final = before + marker_start + "\n" + marker_end + "\n" + after
@@ -289,34 +297,45 @@ def _append_dynamic_news_to_curated(output_path: Path, section_news: list, conte
         return
 
     lines = [marker_start]
-    lines.append(f'\n<h3 class="section-heading" style="margin-top:2rem;">最新媒体报道 (自动更新 {context["today_str"]})</h3>\n')
+    lines.append("")
+    lines.append(f'    <h3 class="section-heading">最新媒体报道 (自动更新 {context["today_str"]})</h3>')
+    lines.append("")
 
     for item in section_news[:15]:
         title_zh = item.get("title_zh") or item.get("title", "")
         summary_zh = item.get("summary_zh") or item.get("summary", "")
         url = item.get("url", "#")
+        if "news.google.com/rss/articles/" in url:
+            from urllib.parse import quote
+            search_q = f"{item.get('title', '')} {item.get('source', '')}".strip()
+            url = f"https://www.google.com/search?q={quote(search_q)}"
         pub = item.get("published", "")
         source = item.get("source_zh") or item.get("source", "")
         is_new = item.get("is_new", False)
 
         card_class = "card card-new" if is_new else "card"
-        new_tag = '<span class="card-tag tag-new">今日新增</span>' if is_new else ""
+        new_tag = '\n            <span class="card-tag tag-new">今日新增</span>' if is_new else ""
 
-        lines.append(f'<div class="{card_class}">')
-        lines.append('  <div class="card-body">')
-        lines.append('    <span class="card-tag tag-akulaku">Akulaku</span>')
-        lines.append(f'    {new_tag}')
-        lines.append('    <div class="card-title">')
-        lines.append(f'      <a href="{url}" target="_blank">{title_zh}</a>')
+        lines.append(f'    <div class="{card_class}">')
+        lines.append('        <div class="card-body">')
+        lines.append('            <span class="card-tag tag-akulaku">Akulaku</span>')
+        lines.append(f'            <span class="card-tag tag-market">媒体</span>{new_tag}')
+        lines.append('            <div class="card-title">')
+        lines.append(f'                <a href="{url}" target="_blank">')
+        lines.append(f'                    {title_zh}')
+        lines.append('                </a>')
+        lines.append('            </div>')
+        lines.append(f'            <div class="card-summary">')
+        lines.append(f'                {summary_zh}')
+        lines.append('            </div>')
+        lines.append('            <div class="card-meta">')
+        lines.append(f'                <span class="card-source">{source}</span>')
+        lines.append(f'                <span>{pub}</span>')
+        lines.append(f'                <a href="{url}" class="card-link" target="_blank">查看原文 →</a>')
+        lines.append('            </div>')
+        lines.append('        </div>')
         lines.append('    </div>')
-        lines.append(f'    <div class="card-summary">{summary_zh}</div>')
-        lines.append('    <div class="card-meta">')
-        lines.append(f'      <span class="card-source">{source}</span>')
-        lines.append(f'      <span>{pub}</span>')
-        lines.append(f'      <a href="{url}" class="card-link" target="_blank">查看原文 →</a>')
-        lines.append('    </div>')
-        lines.append('  </div>')
-        lines.append('</div>')
+        lines.append("")
 
     lines.append(marker_end)
 
