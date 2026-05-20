@@ -29,9 +29,17 @@ logger = logging.getLogger(__name__)
 
 def _resolve_google_news_url(gn_url: str) -> str:
     """Resolve a Google News RSS redirect URL to the actual article URL.
-    Tries GET with redirect following, then falls back to original URL."""
+    Uses googlenewsdecoder library first, then falls back to HTTP redirect."""
     if "news.google.com" not in gn_url:
         return gn_url
+    try:
+        from googlenewsdecoder import gnewsdecoder
+        result = gnewsdecoder(gn_url, interval=0.5)
+        if result.get("status") and result.get("decoded_url"):
+            logger.debug(f"Decoded Google News URL: {result['decoded_url'][:80]}")
+            return result["decoded_url"]
+    except Exception as e:
+        logger.debug(f"gnewsdecoder failed: {e}")
     try:
         resp = requests.get(
             gn_url, allow_redirects=True, timeout=10,
@@ -44,14 +52,6 @@ def _resolve_google_news_url(gn_url: str) -> str:
             stream=True,
         )
         resp.close()
-        final = resp.url
-        if final and "news.google.com" not in final:
-            return final
-    except Exception:
-        pass
-    try:
-        resp = requests.head(gn_url, allow_redirects=True, timeout=8,
-                             headers={"User-Agent": "Mozilla/5.0"})
         final = resp.url
         if final and "news.google.com" not in final:
             return final

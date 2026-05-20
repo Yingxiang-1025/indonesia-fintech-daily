@@ -139,7 +139,7 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
             from urllib.parse import quote
             title = item.get("title", "")
             source = item.get("source", "")
-            search_q = f"{title} {source}".strip()
+            search_q = f'"{title}" {source}'.strip()
             item["url"] = f"https://www.google.com/search?q={quote(search_q)}"
 
     context = {
