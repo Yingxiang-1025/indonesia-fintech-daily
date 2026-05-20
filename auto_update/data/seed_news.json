@@ -8,7 +8,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-01-20",
-    "sections": ["regulation", "p2p_lending"],
+    "sections": [
+      "regulation",
+      "p2p_lending"
+    ],
     "is_major": true
   },
   {
@@ -20,7 +23,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-03-10",
-    "sections": ["p2p_lending", "digital_lending"],
+    "sections": [
+      "p2p_lending",
+      "digital_lending"
+    ],
     "is_major": true
   },
   {
@@ -32,7 +38,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-02-12",
-    "sections": ["p2p_lending", "regulation"],
+    "sections": [
+      "p2p_lending",
+      "regulation"
+    ],
     "is_major": false
   },
   {
@@ -44,7 +53,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-04-01",
-    "sections": ["p2p_lending", "regulation"],
+    "sections": [
+      "p2p_lending",
+      "regulation"
+    ],
     "is_major": false
   },
   {
@@ -56,7 +68,9 @@
     "source": "CNBC Indonesia",
     "source_zh": "CNBC 印尼",
     "published": "2026-03-12",
-    "sections": ["digital_bank"],
+    "sections": [
+      "digital_bank"
+    ],
     "is_major": true
   },
   {
@@ -68,7 +82,10 @@
     "source": "Bisnis.com",
     "source_zh": "Bisnis",
     "published": "2026-01-15",
-    "sections": ["digital_bank", "bnpl"],
+    "sections": [
+      "digital_bank",
+      "bnpl"
+    ],
     "is_major": false
   },
   {
@@ -80,7 +97,10 @@
     "source": "Bisnis.com",
     "source_zh": "Bisnis",
     "published": "2026-04-16",
-    "sections": ["bnpl", "regulation"],
+    "sections": [
+      "bnpl",
+      "regulation"
+    ],
     "is_major": true
   },
   {
@@ -92,20 +112,11 @@
     "source": "Bisnis.com",
     "source_zh": "Bisnis",
     "published": "2026-02-28",
-    "sections": ["bnpl", "digital_lending"],
+    "sections": [
+      "bnpl",
+      "digital_lending"
+    ],
     "is_major": false
-  },
-  {
-    "title": "Report: Akulaku Secures Large Debt Facility from HSBC for Indonesia Ops",
-    "title_zh": "【Akulaku】传 Akulaku 自汇丰获得大额债务授信支持印尼业务",
-    "url": "https://news.dailysocial.id/post/akulaku-dikabarkan-dapat-fasilitas-debt-rp15-triliun-dari-hsbc/",
-    "summary": "DailySocial reports on Akulaku’s major bank line to refinance and scale multi-finance and BNPL activities in Indonesia.",
-    "summary_zh": "媒体披露 <strong>Akulaku</strong> 与<strong>国际大行</strong>的授信合作，用於债务置换与业务扩张，凸显<strong>多金+BNPL</strong> 的资金密集特征。",
-    "source": "DailySocial",
-    "source_zh": "DailySocial",
-    "published": "2026-03-18",
-    "sections": ["akulaku", "bnpl"],
-    "is_major": true
   },
   {
     "title": "Two Years of QRIS: Digital Finance Acceleration in Indonesia",
@@ -116,7 +127,10 @@
     "source": "DailySocial",
     "source_zh": "DailySocial",
     "published": "2026-01-10",
-    "sections": ["e_wallet", "regulation"],
+    "sections": [
+      "e_wallet",
+      "regulation"
+    ],
     "is_major": false
   },
   {
@@ -128,7 +142,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-04-02",
-    "sections": ["cash_loan", "regulation"],
+    "sections": [
+      "cash_loan",
+      "regulation"
+    ],
     "is_major": true
   },
   {
@@ -140,7 +157,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-02-20",
-    "sections": ["cash_loan", "regulation"],
+    "sections": [
+      "cash_loan",
+      "regulation"
+    ],
     "is_major": false
   },
   {
@@ -152,7 +172,11 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-03-25",
-    "sections": ["digital_lending", "p2p_lending", "cash_loan"],
+    "sections": [
+      "digital_lending",
+      "p2p_lending",
+      "cash_loan"
+    ],
     "is_major": false
   },
   {
@@ -164,7 +188,11 @@
     "source": "Tech in Asia Indonesia",
     "source_zh": "Tech in Asia 印尼",
     "published": "2026-01-28",
-    "sections": ["bnpl", "e_wallet", "digital_lending"],
+    "sections": [
+      "bnpl",
+      "e_wallet",
+      "digital_lending"
+    ],
     "is_major": true
   },
   {
@@ -176,7 +204,9 @@
     "source": "CNBC Indonesia",
     "source_zh": "CNBC 印尼",
     "published": "2026-04-10",
-    "sections": ["digital_bank"],
+    "sections": [
+      "digital_bank"
+    ],
     "is_major": false
   },
   {
@@ -188,7 +218,10 @@
     "source": "Bisnis.com",
     "source_zh": "Bisnis",
     "published": "2026-02-05",
-    "sections": ["regulation", "bnpl"],
+    "sections": [
+      "regulation",
+      "bnpl"
+    ],
     "is_major": false
   },
   {
@@ -200,7 +233,9 @@
     "source": "DailySocial",
     "source_zh": "DailySocial",
     "published": "2026-04-12",
-    "sections": ["e_wallet"],
+    "sections": [
+      "e_wallet"
+    ],
     "is_major": false
   },
   {
@@ -212,7 +247,9 @@
     "source": "Bisnis.com",
     "source_zh": "Bisnis",
     "published": "2026-02-14",
-    "sections": ["bnpl"],
+    "sections": [
+      "bnpl"
+    ],
     "is_major": false
   },
   {
@@ -224,7 +261,10 @@
     "source": "Katadata Databoks",
     "source_zh": "Katadata",
     "published": "2026-01-30",
-    "sections": ["credit_card", "bnpl"],
+    "sections": [
+      "credit_card",
+      "bnpl"
+    ],
     "is_major": false
   },
   {
@@ -236,7 +276,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-04-18",
-    "sections": ["p2p_lending", "regulation"],
+    "sections": [
+      "p2p_lending",
+      "regulation"
+    ],
     "is_major": false
   },
   {
@@ -248,7 +291,10 @@
     "source": "Fintech News Indonesia",
     "source_zh": "Fintech News Indonesia",
     "published": "2026-03-01",
-    "sections": ["p2p_lending", "regulation"],
+    "sections": [
+      "p2p_lending",
+      "regulation"
+    ],
     "is_major": false
   },
   {
@@ -260,7 +306,10 @@
     "source": "Kontan",
     "source_zh": "Kontan",
     "published": "2026-01-12",
-    "sections": ["cash_loan", "regulation"],
+    "sections": [
+      "cash_loan",
+      "regulation"
+    ],
     "is_major": false
   },
   {
@@ -272,19 +321,10 @@
     "source": "CekAja",
     "source_zh": "CekAja",
     "published": "2026-04-20",
-    "sections": ["cash_loan", "digital_lending"],
-    "is_major": false
-  },
-  {
-    "title": "Asetku: OJK-Registered P2P Under Pintar Inovasi Digital (Akulaku Ecosystem)",
-    "title_zh": "【P2P/Akulaku】Asetku 与集团生态：P2P 与多金/ BNPL 分业",
-    "url": "https://asetku.com/",
-    "summary": "Asetku markets productive loans and investment products as an OJK-supervised P2P platform, distinct from Akulaku multifinance/BNPL.",
-    "summary_zh": "<strong>PT Pintar Inovasi Digital</strong> 的 <strong>Asetku</strong> 为 OJK 监督 P2P 平台(注册号以 OJK 公示为准)，与 <strong>Akulaku 多金/BNPL</strong> 法律主体与产品相区分。",
-    "source": "Asetku",
-    "source_zh": "Asetku",
-    "published": "2026-02-22",
-    "sections": ["p2p_lending", "akulaku"],
+    "sections": [
+      "cash_loan",
+      "digital_lending"
+    ],
     "is_major": false
   }
 ]
