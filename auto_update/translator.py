@@ -58,12 +58,19 @@ SOURCE_MAP = {
     "Kontan": "Kontan财经",
     "Bisnis.com": "Bisnis商业",
     "CNBC Indonesia": "CNBC印尼",
+    "CNBC Indonesia Tech": "CNBC印尼科技",
+    "CNBC ID Finance": "CNBC印尼金融",
     "DailySocial": "DailySocial科技",
     "Tech in Asia": "Tech in Asia",
     "Katadata": "Katadata数据",
     "Detik Finance": "Detik财经",
+    "Tempo Business": "Tempo商业",
+    "Fintech News SG": "新加坡金融科技",
+    "Fintech News MY": "马来西亚金融科技",
+    "e27": "e27科技",
     "Google News": "谷歌新闻",
     "Jakarta Post": "雅加达邮报",
+    "Thailand Business News": "泰国商业新闻",
 }
 
 
@@ -134,10 +141,22 @@ def _title_prefix(title: str) -> str:
 
 
 def translate_title(title: str) -> str:
-    """Translate title to Chinese with a category prefix."""
-    prefix = _title_prefix(title)
-    zh = google_translate(title)
+    """Translate title to Chinese with a category prefix.
+    Strips trailing ' - Source Name' from the title before translation."""
+    clean_title = _strip_source_suffix(title)
+    prefix = _title_prefix(clean_title)
+    zh = google_translate(clean_title)
     return f"{prefix} {zh}"
+
+
+def _strip_source_suffix(title: str) -> str:
+    """Remove trailing ' - Source Name' or ' | Source' from title."""
+    for sep in [" - ", " | ", " — "]:
+        if sep in title:
+            parts = title.rsplit(sep, 1)
+            if len(parts) == 2 and len(parts[1]) < 50:
+                return parts[0].strip()
+    return title
 
 
 def translate_summary(summary: str) -> str:

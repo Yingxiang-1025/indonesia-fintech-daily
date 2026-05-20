@@ -44,7 +44,10 @@ SEARCH_QUERIES = [
     "Indonesia digital bank news",
     "Indonesia cash loan pinjaman online",
     # Brand tracking - English
-    "Akulaku Indonesia news",
+    "Akulaku Indonesia news 2026",
+    "PT Akulaku Finance Indonesia",
+    "Akulaku BNPL growth Indonesia",
+    "Akulaku Asetku Silvrr fintech",
     "Kredivo Indonesia news",
     "Home Credit Indonesia fintech",
     "ShopeePay Indonesia news",
@@ -111,6 +114,7 @@ GLOBAL_KEYWORDS = [
     "ShopeePay", "GoPayLater", "LinkAja", "Indodana", "Atome", "Home Credit",
     "Bank Jago", "Sea Bank", "Allo Bank", "AdaKami", "Kredit Pintar",
     "Danamas", "Amartha", "KoinWorks", "Modalku", "Investree",
+    "PT Akulaku Finance",
     # Indonesian
     "pinjol", "fintek", "bank digital", "pembayaran digital",
     "kartu kredit", "pinjaman online", "suku bunga",
@@ -120,6 +124,28 @@ GLOBAL_KEYWORDS = [
 # Keywords that require word-boundary matching to avoid false positives
 # e.g. "DANA" should not match "Danantara"
 WORD_BOUNDARY_KEYWORDS = ["DANA"]
+
+# Indonesia geographic keywords — used to filter regional sources
+INDONESIA_GEO_KEYWORDS = [
+    "indonesia", "indonesian", "jakarta", "ojk", "rupiah",
+    "印尼", "印度尼西亚", "雅加达",
+    "tokopedia", "gojek", "goto", "bukalapak",
+    "bank indonesia", "ihsg",
+    "akulaku", "asetku", "kredivo", "adakami", "kredit pintar",
+    "gopay", "shopeepay", "linkaja", "dana indonesia",
+    "pinjol", "pinjaman online", "fintek",
+    "bank jago", "sea bank", "allo bank", "superbank",
+    "koinworks", "modalku", "investree", "amartha", "danamas",
+]
+# Short keywords that need word-boundary matching to avoid substring false positives
+INDONESIA_GEO_WORD_BOUNDARY = ["bri", "bni", "bca", "ovo", "idr", "idx"]
+
+# RSS sources that cover the whole region (not Indonesia-specific)
+# Articles from these must also match INDONESIA_GEO_KEYWORDS
+REGIONAL_SOURCES = [
+    "Fintech News SG", "Fintech News MY", "e27",
+    "fintechnews.sg", "fintechnews.my", "e27.co",
+]
 
 EXCLUDE_KEYWORDS = [
     "PAYPAYA", "เพย์พาญ่า", "Bank of Thailand", "BOT Thailand",

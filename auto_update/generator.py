@@ -135,6 +135,12 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
         fd = item.get("fetched_date", "")
         pub = item.get("published", "")
         item["is_new"] = (fd == today_str and pub >= new_cutoff)
+        if "news.google.com/rss/articles/" in item.get("url", ""):
+            from urllib.parse import quote
+            title = item.get("title", "")
+            source = item.get("source", "")
+            search_q = f"{title} {source}".strip()
+            item["url"] = f"https://www.google.com/search?q={quote(search_q)}"
 
     context = {
         "today_str": today_str,
@@ -206,19 +212,25 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
     # 1. Index page
     _render_template(env, "index.html", OUTPUT_DIR / "index.html", context)
 
-    # 2. Section pages (skip curated pages marked with <!-- CURATED -->)
+    # 2. Section pages (curated pages get dynamic news appended)
     all_key_points = _load_key_points()
 
     for sec_key, page_file in SECTION_PAGES.items():
         output_path = PAGES_DIR / page_file
+        is_curated = False
         if output_path.exists():
             try:
                 content = output_path.read_text(encoding="utf-8")
                 if "<!-- CURATED -->" in content:
-                    logger.info(f"Skipping curated page: {page_file}")
-                    continue
+                    is_curated = True
             except Exception:
                 pass
+
+        if is_curated:
+            _append_dynamic_news_to_curated(
+                output_path, sections.get(sec_key, []), context
+            )
+            continue
 
         sec_context = {
             **context,
@@ -243,6 +255,74 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
     )
 
     logger.info(f"Generated all HTML pages. Vol: {context['vol']}")
+
+
+def _append_dynamic_news_to_curated(output_path: Path, section_news: list, context: dict):
+    """Append dynamically fetched news to a curated HTML page.
+    Replaces any previous dynamic section, keeping the curated content intact."""
+    try:
+        content = output_path.read_text(encoding="utf-8")
+    except Exception:
+        return
+
+    marker_start = "<!-- DYNAMIC_NEWS_START -->"
+    marker_end = "<!-- DYNAMIC_NEWS_END -->"
+
+    if marker_start in content:
+        before = content.split(marker_start)[0]
+        after = content.split(marker_end)[-1] if marker_end in content else ""
+    else:
+        before = content.replace("</div>\n\n<div class=\"footer\">",
+                                  "</div>\n\n<!-- INSERT -->\n<div class=\"footer\">")
+        if "<!-- INSERT -->" in before:
+            parts = before.split("<!-- INSERT -->")
+            before = parts[0]
+            after = parts[1] if len(parts) > 1 else ""
+            after = "<div class=\"footer\">" + after.split("<div class=\"footer\">", 1)[-1] if "<div class=\"footer\">" in after else after
+        else:
+            before = content.rsplit("<div class=\"footer\">", 1)[0]
+            after = "<div class=\"footer\">" + content.rsplit("<div class=\"footer\">", 1)[-1] if "<div class=\"footer\">" in content else ""
+
+    if not section_news:
+        final = before + marker_start + "\n" + marker_end + "\n" + after
+        output_path.write_text(final, encoding="utf-8")
+        return
+
+    lines = [marker_start]
+    lines.append(f'\n<h3 class="section-heading" style="margin-top:2rem;">最新媒体报道 (自动更新 {context["today_str"]})</h3>\n')
+
+    for item in section_news[:15]:
+        title_zh = item.get("title_zh") or item.get("title", "")
+        summary_zh = item.get("summary_zh") or item.get("summary", "")
+        url = item.get("url", "#")
+        pub = item.get("published", "")
+        source = item.get("source_zh") or item.get("source", "")
+        is_new = item.get("is_new", False)
+
+        card_class = "card card-new" if is_new else "card"
+        new_tag = '<span class="card-tag tag-new">今日新增</span>' if is_new else ""
+
+        lines.append(f'<div class="{card_class}">')
+        lines.append('  <div class="card-body">')
+        lines.append('    <span class="card-tag tag-akulaku">Akulaku</span>')
+        lines.append(f'    {new_tag}')
+        lines.append('    <div class="card-title">')
+        lines.append(f'      <a href="{url}" target="_blank">{title_zh}</a>')
+        lines.append('    </div>')
+        lines.append(f'    <div class="card-summary">{summary_zh}</div>')
+        lines.append('    <div class="card-meta">')
+        lines.append(f'      <span class="card-source">{source}</span>')
+        lines.append(f'      <span>{pub}</span>')
+        lines.append(f'      <a href="{url}" class="card-link" target="_blank">查看原文 →</a>')
+        lines.append('    </div>')
+        lines.append('  </div>')
+        lines.append('</div>')
+
+    lines.append(marker_end)
+
+    final = before + "\n".join(lines) + "\n" + after
+    output_path.write_text(final, encoding="utf-8")
+    logger.info(f"Appended {len(section_news[:15])} dynamic items to curated page: {output_path.name}")
 
 
 def _render_template(env: Environment, template_name: str, output_path: Path, context: dict):

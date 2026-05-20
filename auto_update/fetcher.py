@@ -16,6 +16,9 @@ from config import (
     DATA_DIR,
     EXCLUDE_KEYWORDS,
     GLOBAL_KEYWORDS,
+    INDONESIA_GEO_KEYWORDS,
+    INDONESIA_GEO_WORD_BOUNDARY,
+    REGIONAL_SOURCES,
     RSS_FEEDS,
     SEARCH_QUERIES,
     SERPAPI_KEY,
@@ -25,9 +28,27 @@ logger = logging.getLogger(__name__)
 
 
 def _resolve_google_news_url(gn_url: str) -> str:
-    """Resolve a Google News RSS redirect URL to the actual article URL."""
+    """Resolve a Google News RSS redirect URL to the actual article URL.
+    Tries GET with redirect following, then falls back to original URL."""
     if "news.google.com" not in gn_url:
         return gn_url
+    try:
+        resp = requests.get(
+            gn_url, allow_redirects=True, timeout=10,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html",
+            },
+            stream=True,
+        )
+        resp.close()
+        final = resp.url
+        if final and "news.google.com" not in final:
+            return final
+    except Exception:
+        pass
     try:
         resp = requests.head(gn_url, allow_redirects=True, timeout=8,
                              headers={"User-Agent": "Mozilla/5.0"})
@@ -141,7 +162,7 @@ def fetch_rss_feeds(max_age_days: int = 14) -> list[NewsItem]:
                     summary = BeautifulSoup(summary, "html.parser").get_text()
                 summary = summary[:500]
 
-                if not _is_relevant(title, summary):
+                if not _is_relevant(title, summary, source=feed_config["name"]):
                     continue
 
                 actual_link = _resolve_google_news_url(link)
@@ -229,7 +250,8 @@ def _search_serpapi(queries: list) -> list[NewsItem]:
 
                 title_text = result.get("title", "")
                 snippet = result.get("snippet", "")
-                if not _is_relevant(title_text, snippet):
+                src_name = result.get("source", {}).get("name", "Web")
+                if not _is_relevant(title_text, snippet, source=src_name):
                     continue
                 if _url_date_conflicts(url, pub_date):
                     continue
@@ -295,7 +317,8 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
                 raw_summary = raw_summary[:500]
 
                 title_text = entry.get("title", "").strip()
-                if not _is_relevant(title_text, raw_summary):
+                gn_source = entry.get("source", {}).get("title", "Google News")
+                if not _is_relevant(title_text, raw_summary, source=gn_source):
                     continue
                 if _url_date_conflicts(actual_url, pub_date):
                     continue
@@ -303,7 +326,7 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
                     title=title_text,
                     url=actual_url if actual_url != gn_url else gn_url,
                     summary=raw_summary,
-                    source=entry.get("source", {}).get("title", "Google News"),
+                    source=gn_source,
                     published=pub_date,
                 )
                 items.append(item)
@@ -316,22 +339,43 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
     return items
 
 
-def _is_relevant(title: str, summary: str) -> bool:
+def _is_relevant(title: str, summary: str, source: str = "") -> bool:
     """Check if article is relevant to Indonesia fintech.
-    Requires at least 1 keyword match and no cross-country exclusions."""
+    Requires at least 1 keyword match, no cross-country exclusions,
+    and for regional sources, must also mention Indonesia specifically."""
     text = (title + " " + summary).lower()
     for ex in EXCLUDE_KEYWORDS:
         if ex.lower() in text:
             return False
     from config import WORD_BOUNDARY_KEYWORDS
+    has_fintech_kw = False
     for kw in GLOBAL_KEYWORDS:
         kw_lower = kw.lower()
         if kw in WORD_BOUNDARY_KEYWORDS:
             if re.search(r'\b' + re.escape(kw_lower) + r'\b', text):
-                return True
+                has_fintech_kw = True
+                break
         elif kw_lower in text:
-            return True
-    return False
+            has_fintech_kw = True
+            break
+    if not has_fintech_kw:
+        return False
+    if _is_regional_source(source):
+        has_geo = any(geo.lower() in text for geo in INDONESIA_GEO_KEYWORDS)
+        if not has_geo:
+            has_geo = any(
+                re.search(r'\b' + re.escape(wb.lower()) + r'\b', text)
+                for wb in INDONESIA_GEO_WORD_BOUNDARY
+            )
+        if not has_geo:
+            return False
+    return True
+
+
+def _is_regional_source(source: str) -> bool:
+    """Check if the source is a regional (non-Indonesia-specific) outlet."""
+    src_lower = source.lower()
+    return any(rs.lower() in src_lower for rs in REGIONAL_SOURCES)
 
 
 def load_existing_news() -> list[dict]:
