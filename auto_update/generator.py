@@ -11,6 +11,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from config import (
     DATA_DIR,
+    INSURANCE_SECURITIES_KEYWORDS,
     OUTPUT_DIR,
     PAGES_DIR,
     SECTION_DISPLAY_NAMES,
@@ -121,6 +122,28 @@ def _load_key_points() -> dict:
         return {}
 
 
+def _is_insurance_securities_only(item: dict) -> bool:
+    """Return True if item is a regulation article about insurance or securities
+    and has NO overlap with fintech-relevant sections (BNPL, cash_loan, e_wallet,
+    digital_bank, digital_lending, p2p_lending, akulaku)."""
+    sections = item.get("sections", [])
+    if "regulation" not in sections:
+        return False
+    fintech_sections = {
+        "bnpl", "cash_loan", "e_wallet", "digital_bank",
+        "digital_lending", "p2p_lending", "akulaku",
+    }
+    if fintech_sections & set(sections):
+        return False
+    text = (
+        (item.get("title") or "") + " " +
+        (item.get("title_zh") or "") + " " +
+        (item.get("summary") or "") + " " +
+        (item.get("summary_zh") or "")
+    ).lower()
+    return any(kw.lower() in text for kw in INSURANCE_SECURITIES_KEYWORDS)
+
+
 def generate_all_pages(news_items: list[dict], vol_number: int = 1):
     """Generate/update all HTML pages from news data."""
     news_items = _validate_news_items(news_items)
@@ -169,18 +192,24 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
     for sec in sections:
         sections[sec].sort(key=lambda x: x.get("published", ""), reverse=True)
 
-    # Today's and yesterday's news
+    # Today's and yesterday's news (exclude insurance/securities regulation-only items)
     today_news = [
-        n for n in news_items if n.get("published") == today.strftime("%Y-%m-%d")
+        n for n in news_items
+        if n.get("published") == today.strftime("%Y-%m-%d")
+        and not _is_insurance_securities_only(n)
     ]
     yesterday_news = [
-        n for n in news_items if n.get("published") == yesterday.strftime("%Y-%m-%d")
+        n for n in news_items
+        if n.get("published") == yesterday.strftime("%Y-%m-%d")
+        and not _is_insurance_securities_only(n)
     ]
 
-    # Current month news
+    # Current month news (exclude insurance/securities regulation-only items)
     month_prefix = today.strftime("%Y-%m")
     monthly_news = [
-        n for n in news_items if n.get("published", "").startswith(month_prefix)
+        n for n in news_items
+        if n.get("published", "").startswith(month_prefix)
+        and not _is_insurance_securities_only(n)
     ]
     monthly_news.sort(key=lambda x: x.get("published", ""), reverse=True)
 

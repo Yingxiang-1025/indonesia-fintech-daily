@@ -90,6 +90,53 @@ def _url_date_conflicts(url: str, pub_date_str: str) -> bool:
     return False
 
 
+_URL_CHECK_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+}
+
+
+def _validate_url(url: str) -> bool:
+    """Quick check that a URL is reachable (not 404 or DNS failure).
+    Returns True if OK or uncertain (403/timeout = anti-bot, counts as OK).
+    Returns False only for hard failures: 404, 410, DNS resolution errors."""
+    if not url or "google.com/search" in url:
+        return True
+    try:
+        resp = requests.head(
+            url, headers=_URL_CHECK_HEADERS, timeout=8, allow_redirects=True,
+        )
+        if resp.status_code == 405:
+            resp = requests.get(
+                url, headers=_URL_CHECK_HEADERS, timeout=8,
+                allow_redirects=True, stream=True,
+            )
+            resp.close()
+        if resp.status_code in (404, 410, 500, 502, 503):
+            logger.info(f"URL check failed [{resp.status_code}]: {url[:80]}")
+            return False
+        return True
+    except requests.exceptions.ConnectionError:
+        logger.info(f"URL check DNS fail: {url[:80]}")
+        return False
+    except requests.exceptions.Timeout:
+        return True
+    except Exception:
+        return True
+
+
+def _url_with_fallback(url: str, title: str, source: str) -> str:
+    """Return the URL if valid, otherwise a Google Search fallback."""
+    if _validate_url(url):
+        return url
+    from urllib.parse import quote
+    search_q = f'"{title}" {source}'.strip()
+    fallback = f"https://www.google.com/search?q={quote(search_q)}"
+    logger.info(f"URL replaced with Google Search fallback: {title[:50]}")
+    return fallback
+
+
 class NewsItem:
     """Represents a single news article."""
 
@@ -179,9 +226,12 @@ def fetch_rss_feeds(max_age_days: int = 14) -> list[NewsItem]:
                 if _url_date_conflicts(actual_link, pub_str):
                     continue
 
+                final_url = actual_link if actual_link != link else link
+                final_url = _url_with_fallback(final_url, title, feed_config["name"])
+
                 item = NewsItem(
                     title=title,
-                    url=actual_link if actual_link != link else link,
+                    url=final_url,
                     summary=summary,
                     source=feed_config["name"],
                     published=pub_str,
@@ -334,9 +384,12 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
                         continue
                     if _url_date_conflicts(actual_url, pub_date):
                         continue
+                    final_url = actual_url if actual_url != gn_url else gn_url
+                    final_url = _url_with_fallback(final_url, title_text, gn_source)
+
                     item = NewsItem(
                         title=title_text,
-                        url=actual_url if actual_url != gn_url else gn_url,
+                        url=final_url,
                         summary=raw_summary,
                         source=gn_source,
                         published=pub_date,

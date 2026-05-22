@@ -40,11 +40,17 @@ RSS_FEEDS = [
     {"name": "Fintech News MY", "url": "https://fintechnews.my/feed/", "category": "fintech"},
     {"name": "e27", "url": "https://e27.co/feed/", "category": "fintech"},
     {"name": "Tech in Asia", "url": "https://www.techinasia.com/feed", "category": "fintech"},
+    # Akulaku / brand-specific Google News RSS
+    {"name": "GN Akulaku", "url": "https://news.google.com/rss/search?q=Akulaku+Indonesia&hl=en&gl=ID&ceid=ID:en", "category": "akulaku"},
+    {"name": "GN Kredivo", "url": "https://news.google.com/rss/search?q=Kredivo+Indonesia&hl=en&gl=ID&ceid=ID:en", "category": "bnpl"},
+    {"name": "GN HomeCredit ID", "url": "https://news.google.com/rss/search?q=%22Home+Credit%22+Indonesia&hl=en&gl=ID&ceid=ID:en", "category": "bnpl"},
+    {"name": "GN BNPL ID", "url": "https://news.google.com/rss/search?q=BNPL+paylater+Indonesia&hl=en&gl=ID&ceid=ID:en", "category": "bnpl"},
+    {"name": "GN Pinjol", "url": "https://news.google.com/rss/search?q=pinjol+OJK+2026&hl=id&gl=id&ceid=ID:id", "category": "cash_loan"},
 ]
 
 # ─── Web Search Queries (run daily) ─────────────────────
 SEARCH_QUERIES = [
-    # ── Akulaku Group (highest priority) ──
+    # ── Akulaku Group (highest priority, 12 queries) ──
     "Akulaku Indonesia news 2026",
     "PT Akulaku Finance Indonesia",
     "Akulaku BNPL growth Indonesia",
@@ -52,31 +58,43 @@ SEARCH_QUERIES = [
     "Akulaku berita terbaru Indonesia",
     "Akulaku OneAsia fintech Indonesia",
     "Akulaku multifinance OJK",
+    "Akulaku paylater Indonesia terbaru",
+    "Akulaku kredit digital Indonesia",
+    "PT Akulaku Silvrr Group Indonesia",
+    "Akulaku annual report Indonesia",
+    "Akulaku partnership Indonesia 2026",
     # ── OJK & Regulation ──
     "OJK fintech regulation 2026",
     "OJK sanksi fintech lending",
     "OJK daftar P2P lending terbaru",
     "OJK kebijakan pinjol terbaru 2026",
     "Bank Indonesia pembayaran digital 2026",
-    # ── Peer brands - English ──
+    # ── BNPL / Peer brands - English (expanded) ──
     "Kredivo Indonesia news 2026",
+    "Kredivo BNPL paylater growth Indonesia",
     "Home Credit Indonesia fintech news",
+    "Home Credit Indonesia BNPL 2026",
     "ShopeePay Indonesia news 2026",
     "GoPaylater GoPayLater Indonesia",
-    "DANA e-wallet Indonesia news",
-    "OVO digital payment Indonesia 2026",
-    "LinkAja Indonesia digital payment",
+    "GoPaylater Gojek paylater terbaru",
     "Indodana Atome Indonesia BNPL",
+    "Atome Indonesia BNPL paylater 2026",
     "Kredit Pintar AdaKami Indonesia",
     "JULO fintech lending Indonesia",
     "Bank Jago Sea Bank digital Indonesia",
-    # ── Peer brands - Indonesian ──
+    "DANA e-wallet Indonesia news",
+    "OVO digital payment Indonesia 2026",
+    "LinkAja Indonesia digital payment",
+    # ── BNPL / Peer brands - Indonesian ──
     "Kredivo pinjaman Indonesia terbaru",
+    "Kredivo cicilan tanpa kartu kredit",
+    "Home Credit cicilan Indonesia terbaru",
     "ShopeePay promo terbaru Indonesia",
     "GoPay QRIS pembayaran digital",
     "DANA dompet digital terbaru",
     "OVO promo cashback Indonesia",
-    "Home Credit cicilan Indonesia",
+    "Atome cicilan Indonesia 2026",
+    "paylater Indonesia perbandingan terbaru",
     # ── General fintech - English ──
     "Indonesia fintech lending news",
     "Indonesia P2P lending OJK 2026",
@@ -117,10 +135,14 @@ SECTION_KEYWORDS = {
         "registered lending",
     ],
     "bnpl": [
-        "BNPL", "paylater", "pay later", "Kredivo", "Akulaku", "Indodana", "Atome", "Home Credit", "GoPaylater",
+        "BNPL", "paylater", "pay later", "Kredivo", "Akulaku", "Indodana", "Atome",
+        "Home Credit", "GoPaylater", "GoPayLater", "cicilan", "installment",
+        "buy now pay later", "beli sekarang bayar nanti",
     ],
     "e_wallet": [
-        "e-wallet", "GoPay", "OVO", "DANA", "ShopeePay", "LinkAja", "digital wallet", "dompet digital", "QRIS",
+        "e-wallet", "GoPay", "OVO", "DANA", "ShopeePay", "LinkAja",
+        "digital wallet", "dompet digital", "QRIS", "mobile payment",
+        "pembayaran digital", "cashless",
     ],
     "digital_bank": [
         "digital bank", "Bank Jago", "Allo Bank", "Bank Neo Commerce", "Sea Bank", "SuperBank", "neobank",
@@ -183,6 +205,24 @@ INDONESIA_GEO_WORD_BOUNDARY = ["bri", "bni", "bca", "ovo", "idr", "idx"]
 REGIONAL_SOURCES = [
     "Fintech News SG", "Fintech News MY", "e27",
     "fintechnews.sg", "fintechnews.my", "e27.co",
+]
+
+# Insurance / securities regulation keywords — these stay in the regulation
+# section page but are excluded from yesterday/monthly summaries and
+# treated as low-priority "other" in WeChat push.
+INSURANCE_SECURITIES_KEYWORDS = [
+    # Insurance (English + Indonesian)
+    "insurance", "asuransi", "reinsurance", "reasuransi",
+    "life insurance", "asuransi jiwa", "health insurance", "asuransi kesehatan",
+    "underwriting", "actuarial", "premi asuransi", "klaim asuransi",
+    "AAUI", "AAJI",
+    # Securities / Capital market (English + Indonesian)
+    "securities", "efek", "stock exchange", "bursa efek",
+    "capital market", "pasar modal", "IPO", "saham",
+    "bond", "obligasi", "mutual fund", "reksa dana", "reksadana",
+    "IHSG", "IDX", "BEI", "securities commission",
+    "stock manipulation", "insider trading",
+    "emiten", "waran", "right issue",
 ]
 
 EXCLUDE_KEYWORDS = [

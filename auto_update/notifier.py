@@ -5,8 +5,9 @@ Format:
   Part 1 — 昨日动态：200-300字通顺中文段落
   Part 2 — 明细：每条含完整中文标题 + 完整摘要 + 原文链接
   Footer — 查看完整日报链接
-Priority: Akulaku/Asetku > 监管 > Others
-Akulaku and regulation items shown in FULL; others capped.
+Priority: Akulaku集团 > 监管(fintech相关) > 同行品牌 > 其他
+监管仅含BNPL/现金贷/电子钱包/数字银行/同行相关，保险/证券归入其他。
+推送总量上限 8 条。
 """
 import json
 import re
@@ -15,7 +16,12 @@ from pathlib import Path
 
 import requests
 
+from config import INSURANCE_SECURITIES_KEYWORDS
+
 logger = logging.getLogger(__name__)
+
+MIN_PUSH_ITEMS = 3
+MAX_PUSH_ITEMS = 8
 
 WECHAT_WEBHOOK_URL = (
     "https://qyapi.weixin.qq.com/cgi-bin/webhook/send"
@@ -104,10 +110,38 @@ def _title_text(item: dict) -> str:
 
 # ─── Grouping ────────────────────────────────────────────
 
+def _is_insurance_securities_regulation(item: dict) -> bool:
+    """Check if a regulation item is about insurance/securities (not fintech).
+    These get demoted to 'other' in push priority."""
+    sections = item.get("sections", [])
+    if "regulation" not in sections:
+        return False
+    fintech_sections = {
+        "bnpl", "cash_loan", "e_wallet", "digital_bank",
+        "digital_lending", "p2p_lending", "akulaku",
+    }
+    if fintech_sections & set(sections):
+        return False
+    text = (
+        (item.get("title") or "") + " " +
+        (item.get("title_zh") or "") + " " +
+        (item.get("summary") or "") + " " +
+        (item.get("summary_zh") or "")
+    ).lower()
+    return any(kw.lower() in text for kw in INSURANCE_SECURITIES_KEYWORDS)
+
+
 def _best_section(item: dict) -> str:
+    """Determine the best section for push grouping.
+    Insurance/securities regulation is demoted to 'other'."""
     sections = item.get("sections", [])
     if not sections:
         return "other"
+    if _is_insurance_securities_regulation(item):
+        remaining = [s for s in sections if s != "regulation"]
+        if not remaining:
+            return "other"
+        return min(remaining, key=lambda s: SECTION_META.get(s, _DEFAULT_META)["priority"])
     return min(sections, key=lambda s: SECTION_META.get(s, _DEFAULT_META)["priority"])
 
 
@@ -286,11 +320,16 @@ def send_wechat_notification(new_items: list[dict], today_str: str) -> bool:
         logger.info("No unpushed yesterday news — sending 'no update' notification.")
     else:
         items = sorted(unpushed, key=lambda n: _meta(_best_section(n))["priority"])
+        if len(items) > MAX_PUSH_ITEMS:
+            logger.info(f"Push cap: trimming {len(items)} items to {MAX_PUSH_ITEMS}")
+            items = items[:MAX_PUSH_ITEMS]
+        if len(items) < MIN_PUSH_ITEMS:
+            logger.info(f"Only {len(items)} items, below minimum {MIN_PUSH_ITEMS}")
         message = build_message(items, today_str)
         if not message:
             return False
 
-        while len(message.encode("utf-8")) > 3800 and len(items) > 3:
+        while len(message.encode("utf-8")) > 3800 and len(items) > MIN_PUSH_ITEMS:
             items = items[:-1]
             message = build_message(items, today_str)
         logger.info(f"Message length: {len(message)} chars, {len(message.encode('utf-8'))} bytes, items: {len(items)}")
