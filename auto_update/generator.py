@@ -12,8 +12,10 @@ from jinja2 import Environment, FileSystemLoader
 from config import (
     DATA_DIR,
     INSURANCE_SECURITIES_KEYWORDS,
+    MACRO_EXCLUDE_KEYWORDS,
     OUTPUT_DIR,
     PAGES_DIR,
+    REGULATION_DAILY_CAP,
     SECTION_DISPLAY_NAMES,
     SECTION_PAGES,
     SECTION_TAG_CLASSES,
@@ -122,10 +124,10 @@ def _load_key_points() -> dict:
         return {}
 
 
-def _is_insurance_securities_only(item: dict) -> bool:
-    """Return True if item is a regulation article about insurance or securities
-    and has NO overlap with fintech-relevant sections (BNPL, cash_loan, e_wallet,
-    digital_bank, digital_lending, p2p_lending, akulaku)."""
+def _is_non_fintech_regulation(item: dict) -> bool:
+    """Return True if item is a regulation article NOT related to fintech.
+    Covers: insurance, securities, and pure macro-economic content.
+    These are excluded from yesterday/monthly summaries."""
     sections = item.get("sections", [])
     if "regulation" not in sections:
         return False
@@ -141,7 +143,27 @@ def _is_insurance_securities_only(item: dict) -> bool:
         (item.get("summary") or "") + " " +
         (item.get("summary_zh") or "")
     ).lower()
-    return any(kw.lower() in text for kw in INSURANCE_SECURITIES_KEYWORDS)
+    if any(kw.lower() in text for kw in INSURANCE_SECURITIES_KEYWORDS):
+        return True
+    if any(kw.lower() in text for kw in MACRO_EXCLUDE_KEYWORDS):
+        return True
+    return False
+
+
+def _cap_regulation_in_list(items: list[dict], cap: int) -> list[dict]:
+    """Cap regulation-only items in a list, keeping top items by date.
+    Non-regulation items and items with fintech sections pass through."""
+    result = []
+    reg_count = 0
+    for item in items:
+        sections = set(item.get("sections", []))
+        is_pure_reg = sections == {"regulation"} or sections <= {"regulation"}
+        if is_pure_reg:
+            reg_count += 1
+            if reg_count > cap:
+                continue
+        result.append(item)
+    return result
 
 
 def generate_all_pages(news_items: list[dict], vol_number: int = 1):
@@ -192,26 +214,30 @@ def generate_all_pages(news_items: list[dict], vol_number: int = 1):
     for sec in sections:
         sections[sec].sort(key=lambda x: x.get("published", ""), reverse=True)
 
-    # Today's and yesterday's news (exclude insurance/securities regulation-only items)
+    # Today's and yesterday's news (exclude non-fintech regulation, cap regulation)
     today_news = [
         n for n in news_items
         if n.get("published") == today.strftime("%Y-%m-%d")
-        and not _is_insurance_securities_only(n)
+        and not _is_non_fintech_regulation(n)
     ]
+    today_news = _cap_regulation_in_list(today_news, REGULATION_DAILY_CAP)
+
     yesterday_news = [
         n for n in news_items
         if n.get("published") == yesterday.strftime("%Y-%m-%d")
-        and not _is_insurance_securities_only(n)
+        and not _is_non_fintech_regulation(n)
     ]
+    yesterday_news = _cap_regulation_in_list(yesterday_news, REGULATION_DAILY_CAP)
 
-    # Current month news (exclude insurance/securities regulation-only items)
+    # Current month news (exclude non-fintech regulation, cap regulation)
     month_prefix = today.strftime("%Y-%m")
     monthly_news = [
         n for n in news_items
         if n.get("published", "").startswith(month_prefix)
-        and not _is_insurance_securities_only(n)
+        and not _is_non_fintech_regulation(n)
     ]
     monthly_news.sort(key=lambda x: x.get("published", ""), reverse=True)
+    monthly_news = _cap_regulation_in_list(monthly_news, REGULATION_DAILY_CAP * 5)
 
     # Major news (top 5)
     major_news = [n for n in news_items if n.get("is_major")][:5]

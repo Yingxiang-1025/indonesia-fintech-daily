@@ -16,12 +16,13 @@ from pathlib import Path
 
 import requests
 
-from config import INSURANCE_SECURITIES_KEYWORDS
+from config import INSURANCE_SECURITIES_KEYWORDS, MACRO_EXCLUDE_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
 MIN_PUSH_ITEMS = 3
 MAX_PUSH_ITEMS = 8
+MAX_REGULATION_IN_PUSH = 2
 
 WECHAT_WEBHOOK_URL = (
     "https://qyapi.weixin.qq.com/cgi-bin/webhook/send"
@@ -110,8 +111,8 @@ def _title_text(item: dict) -> str:
 
 # ─── Grouping ────────────────────────────────────────────
 
-def _is_insurance_securities_regulation(item: dict) -> bool:
-    """Check if a regulation item is about insurance/securities (not fintech).
+def _is_non_fintech_regulation(item: dict) -> bool:
+    """Check if a regulation item is NOT about fintech (insurance/securities/macro).
     These get demoted to 'other' in push priority."""
     sections = item.get("sections", [])
     if "regulation" not in sections:
@@ -128,16 +129,20 @@ def _is_insurance_securities_regulation(item: dict) -> bool:
         (item.get("summary") or "") + " " +
         (item.get("summary_zh") or "")
     ).lower()
-    return any(kw.lower() in text for kw in INSURANCE_SECURITIES_KEYWORDS)
+    if any(kw.lower() in text for kw in INSURANCE_SECURITIES_KEYWORDS):
+        return True
+    if any(kw.lower() in text for kw in MACRO_EXCLUDE_KEYWORDS):
+        return True
+    return False
 
 
 def _best_section(item: dict) -> str:
     """Determine the best section for push grouping.
-    Insurance/securities regulation is demoted to 'other'."""
+    Non-fintech regulation is demoted to 'other'."""
     sections = item.get("sections", [])
     if not sections:
         return "other"
-    if _is_insurance_securities_regulation(item):
+    if _is_non_fintech_regulation(item):
         remaining = [s for s in sections if s != "regulation"]
         if not remaining:
             return "other"
@@ -320,6 +325,19 @@ def send_wechat_notification(new_items: list[dict], today_str: str) -> bool:
         logger.info("No unpushed yesterday news — sending 'no update' notification.")
     else:
         items = sorted(unpushed, key=lambda n: _meta(_best_section(n))["priority"])
+        # Cap regulation items at MAX_REGULATION_IN_PUSH
+        reg_count = 0
+        capped_items = []
+        for item in items:
+            if _best_section(item) == "regulation":
+                reg_count += 1
+                if reg_count > MAX_REGULATION_IN_PUSH:
+                    continue
+            capped_items.append(item)
+        if reg_count > MAX_REGULATION_IN_PUSH:
+            logger.info(f"Regulation cap: {reg_count} -> {MAX_REGULATION_IN_PUSH}")
+        items = capped_items
+
         if len(items) > MAX_PUSH_ITEMS:
             logger.info(f"Push cap: trimming {len(items)} items to {MAX_PUSH_ITEMS}")
             items = items[:MAX_PUSH_ITEMS]

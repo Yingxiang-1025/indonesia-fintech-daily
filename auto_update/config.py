@@ -63,12 +63,13 @@ SEARCH_QUERIES = [
     "PT Akulaku Silvrr Group Indonesia",
     "Akulaku annual report Indonesia",
     "Akulaku partnership Indonesia 2026",
-    # ── OJK & Regulation ──
+    # ── OJK & Regulation (fintech-focused) ──
     "OJK fintech regulation 2026",
     "OJK sanksi fintech lending",
     "OJK daftar P2P lending terbaru",
     "OJK kebijakan pinjol terbaru 2026",
-    "Bank Indonesia pembayaran digital 2026",
+    "OJK regulasi BNPL paylater 2026",
+    "Bank Indonesia QRIS pembayaran digital 2026",
     # ── BNPL / Peer brands - English (expanded) ──
     "Kredivo Indonesia news 2026",
     "Kredivo BNPL paylater growth Indonesia",
@@ -117,8 +118,12 @@ SEARCH_QUERIES = [
 
 SECTION_KEYWORDS = {
     "regulation": [
-        "OJK", "Bank Indonesia", "regulasi", "POJK", "moratorium", "fintech lending",
-        "P2P regulation", "consumer protection",
+        "POJK", "moratorium", "fintech lending", "P2P regulation", "consumer protection",
+        "regulasi fintek", "regulasi pinjol", "regulasi pinjaman online",
+        "regulasi BNPL", "regulasi paylater", "regulasi dompet digital",
+        "aturan fintech", "aturan pinjol", "kebijakan fintech",
+        "sanksi fintech", "sanksi pinjol", "izin fintech",
+        "fintech regulation", "lending regulation", "digital payment regulation",
     ],
     "credit_card": [
         "credit card", "kartu kredit", "Mastercard", "Visa", "BCA card", "BRI card",
@@ -159,7 +164,7 @@ GLOBAL_KEYWORDS = [
     # English core
     "fintech", "lending", "pinjaman", "kredit", "digital bank", "e-wallet",
     "BNPL", "paylater", "GoPay",
-    "OJK", "Bank Indonesia", "QRIS",
+    "QRIS",
     "P2P", "fintech lending", "digital payment", "dompet digital", "neobank",
     # Akulaku group
     "Akulaku", "Asetku", "Silvrr", "OneAsia",
@@ -175,8 +180,8 @@ GLOBAL_KEYWORDS = [
     "Danamas", "Amartha", "KoinWorks", "Modalku", "Investree",
     # Indonesian
     "pinjol", "fintek", "bank digital", "pembayaran digital",
-    "kartu kredit", "pinjaman online", "suku bunga",
-    "regulasi keuangan", "inklusi keuangan", "teknologi keuangan",
+    "kartu kredit", "pinjaman online",
+    "inklusi keuangan", "teknologi keuangan",
     "cicilan", "kredit digital",
 ]
 
@@ -210,6 +215,22 @@ REGIONAL_SOURCES = [
 # Insurance / securities regulation keywords — these stay in the regulation
 # section page but are excluded from yesterday/monthly summaries and
 # treated as low-priority "other" in WeChat push.
+# Macro-economic keywords — regulation items matching these (without fintech
+# keywords) are excluded from regulation section, kept only if they match
+# other fintech sections.
+MACRO_EXCLUDE_KEYWORDS = [
+    "suku bunga acuan", "BI rate", "BI 7-day", "7-Day Reverse Repo",
+    "inflasi", "inflation", "deflasi",
+    "nilai tukar", "exchange rate", "kurs rupiah", "USD/IDR",
+    "cadangan devisa", "foreign reserve",
+    "neraca perdagangan", "trade balance",
+    "pertumbuhan ekonomi", "GDP", "PDB",
+    "JCI", "IHSG",
+]
+
+# Maximum number of regulation items in daily/monthly summaries
+REGULATION_DAILY_CAP = 5
+
 INSURANCE_SECURITIES_KEYWORDS = [
     # Insurance (English + Indonesian)
     "insurance", "asuransi", "reinsurance", "reasuransi",
