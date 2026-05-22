@@ -90,6 +90,95 @@ def _url_date_conflicts(url: str, pub_date_str: str) -> bool:
     return False
 
 
+# Sources that aggregate/republish content — dates may not be original
+AGGREGATOR_SOURCES = ["MSN", "msn.com", "TradingView", "tradingview.com",
+                      "Yahoo", "yahoo.com", "InvestorTrust"]
+
+_MONTH_NAMES = {
+    "januari": "01", "februari": "02", "maret": "03", "april": "04",
+    "mei": "05", "juni": "06", "juli": "07", "agustus": "08",
+    "september": "09", "oktober": "10", "november": "11", "desember": "12",
+    "january": "01", "february": "02", "march": "03", "may": "05",
+    "june": "06", "july": "07", "august": "08", "october": "10",
+    "december": "12",
+}
+
+
+def _is_old_event_article(title: str, url: str) -> bool:
+    """Detect articles about pre-2026 events based on title/URL patterns
+    like 'pada Oktober 2025' or 'per November 2025'."""
+    combined = (title + " " + url).lower()
+    for month_name in _MONTH_NAMES:
+        for pat in [
+            rf"(?:pada|per|bulan|in)\s+{month_name}\s+(\d{{4}})",
+            rf"{month_name}[-\s]+(\d{{4}})",
+        ]:
+            m = re.search(pat, combined)
+            if m:
+                year = int(m.group(1))
+                if year < 2026:
+                    has_in_url = any(
+                        mn in url.lower() for mn in _MONTH_NAMES
+                    ) and str(year) in url
+                    if has_in_url:
+                        return True
+    return False
+
+
+def _extract_pub_date_from_page(url: str) -> str | None:
+    """Fetch a page and extract the real publication date from meta tags.
+    Looks for og:article:published_time, datePublished, etc."""
+    if not url or "google.com/search" in url:
+        return None
+    try:
+        resp = requests.get(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html",
+            },
+            timeout=10,
+            allow_redirects=True,
+        )
+        if resp.status_code >= 400:
+            return None
+        html = resp.text[:20000]
+
+        # Try meta tags: og:article:published_time, article:published_time
+        for pattern in [
+            r'property="article:published_time"\s+content="([^"]+)"',
+            r'property="og:article:published_time"\s+content="([^"]+)"',
+            r'name="publish[_-]?date"\s+content="([^"]+)"',
+            r'"datePublished"\s*:\s*"([^"]+)"',
+            r'"publishedDate"\s*:\s*"([^"]+)"',
+        ]:
+            m = re.search(pattern, html)
+            if m:
+                raw = m.group(1)
+                try:
+                    dt = date_parser.parse(raw)
+                    return dt.strftime("%Y-%m-%d")
+                except (ValueError, TypeError):
+                    continue
+
+        # Try URL of final destination (after redirects)
+        final_url = resp.url
+        url_date = _extract_date_from_url(final_url)
+        if url_date:
+            return url_date
+
+    except Exception as e:
+        logger.debug(f"Failed to extract date from {url[:60]}: {e}")
+    return None
+
+
+def _is_aggregator_source(source: str) -> bool:
+    """Check if a source is a known content aggregator."""
+    src_lower = source.lower()
+    return any(agg.lower() in src_lower for agg in AGGREGATOR_SOURCES)
+
+
 _URL_CHECK_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -212,6 +301,10 @@ def fetch_rss_feeds(max_age_days: int = 14) -> list[NewsItem]:
                 if not _is_relevant(title, summary, source=feed_config["name"]):
                     continue
 
+                if _is_old_event_article(title, link):
+                    logger.info(f"Skip old event article: {title[:50]}")
+                    continue
+
                 actual_link = _resolve_google_news_url(link)
                 url_date = _extract_date_from_url(actual_link)
                 pub_str = pub_date.strftime("%Y-%m-%d") if pub_date else None
@@ -222,6 +315,24 @@ def fetch_rss_feeds(max_age_days: int = 14) -> list[NewsItem]:
                         continue
                     if url_date != pub_str:
                         pub_str = url_date
+
+                # For aggregator sources, try to get the real publication date
+                if _is_aggregator_source(feed_config["name"]):
+                    real_date = _extract_pub_date_from_page(actual_link or link)
+                    if real_date:
+                        real_year = int(real_date[:4])
+                        if real_year < 2026:
+                            logger.info(
+                                f"Skip aggregator old article (real_date={real_date}): "
+                                f"{title[:50]}"
+                            )
+                            continue
+                        if real_date != pub_str:
+                            logger.info(
+                                f"Aggregator date corrected: {pub_str} -> {real_date}: "
+                                f"{title[:50]}"
+                            )
+                            pub_str = real_date
 
                 if _url_date_conflicts(actual_link, pub_str):
                     continue
@@ -382,6 +493,25 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
                     gn_source = entry.get("source", {}).get("title", "Google News")
                     if not _is_relevant(title_text, raw_summary, source=gn_source):
                         continue
+
+                    if _is_old_event_article(title_text, actual_url or gn_url):
+                        logger.info(f"Skip old event article: {title_text[:50]}")
+                        continue
+
+                    # For aggregator sources via Google News, verify real date
+                    if _is_aggregator_source(gn_source):
+                        real_date = _extract_pub_date_from_page(actual_url or gn_url)
+                        if real_date:
+                            real_year = int(real_date[:4])
+                            if real_year < 2026:
+                                logger.info(
+                                    f"Skip aggregator old (real={real_date}): "
+                                    f"{title_text[:50]}"
+                                )
+                                continue
+                            if real_date != pub_date:
+                                pub_date = real_date
+
                     if _url_date_conflicts(actual_url, pub_date):
                         continue
                     final_url = actual_url if actual_url != gn_url else gn_url
