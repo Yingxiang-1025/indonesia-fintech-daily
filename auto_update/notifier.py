@@ -23,6 +23,14 @@ logger = logging.getLogger(__name__)
 MIN_PUSH_ITEMS = 3
 MAX_PUSH_ITEMS = 8
 MAX_REGULATION_IN_PUSH = 2
+MAX_OTHER_IN_PUSH = 2
+
+# Push category grouping:
+#   "akulaku"    -> unlimited
+#   "regulation" -> max 2 (fintech only)
+#   "peers"      -> unlimited (BNPL, e_wallet, cash_loan, digital_bank)
+#   "other"      -> max 2 (digital_lending, p2p_lending, credit_card, etc.)
+PEER_SECTIONS = {"bnpl", "e_wallet", "cash_loan", "digital_bank"}
 
 WECHAT_WEBHOOK_URL = (
     "https://qyapi.weixin.qq.com/cgi-bin/webhook/send"
@@ -325,17 +333,28 @@ def send_wechat_notification(new_items: list[dict], today_str: str) -> bool:
         logger.info("No unpushed yesterday news — sending 'no update' notification.")
     else:
         items = sorted(unpushed, key=lambda n: _meta(_best_section(n))["priority"])
-        # Cap regulation items at MAX_REGULATION_IN_PUSH
+        # Apply per-category caps:
+        #   akulaku: unlimited, regulation: max 2, peers: unlimited, other: max 2
         reg_count = 0
+        other_count = 0
         capped_items = []
         for item in items:
-            if _best_section(item) == "regulation":
+            sec = _best_section(item)
+            if sec == "regulation":
                 reg_count += 1
                 if reg_count > MAX_REGULATION_IN_PUSH:
+                    continue
+            elif sec == "akulaku" or sec in PEER_SECTIONS:
+                pass
+            else:
+                other_count += 1
+                if other_count > MAX_OTHER_IN_PUSH:
                     continue
             capped_items.append(item)
         if reg_count > MAX_REGULATION_IN_PUSH:
             logger.info(f"Regulation cap: {reg_count} -> {MAX_REGULATION_IN_PUSH}")
+        if other_count > MAX_OTHER_IN_PUSH:
+            logger.info(f"Other cap: {other_count} -> {MAX_OTHER_IN_PUSH}")
         items = capped_items
 
         if len(items) > MAX_PUSH_ITEMS:
