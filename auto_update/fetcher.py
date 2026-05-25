@@ -190,8 +190,8 @@ def _validate_url(url: str) -> bool:
     """Quick check that a URL is reachable (not 404 or DNS failure).
     Returns True if OK or uncertain (403/timeout = anti-bot, counts as OK).
     Returns False only for hard failures: 404, 410, DNS resolution errors."""
-    if not url or "google.com/search" in url:
-        return True
+    if not url:
+        return False
     try:
         resp = requests.head(
             url, headers=_URL_CHECK_HEADERS, timeout=8, allow_redirects=True,
@@ -215,15 +215,12 @@ def _validate_url(url: str) -> bool:
         return True
 
 
-def _url_with_fallback(url: str, title: str, source: str) -> str:
-    """Return the URL if valid, otherwise a Google Search fallback."""
+def _url_with_fallback(url: str, title: str, source: str) -> str | None:
+    """Return the URL if valid, otherwise None (skip this item)."""
     if _validate_url(url):
         return url
-    from urllib.parse import quote
-    search_q = f'"{title}" {source}'.strip()
-    fallback = f"https://www.google.com/search?q={quote(search_q)}"
-    logger.info(f"URL replaced with Google Search fallback: {title[:50]}")
-    return fallback
+    logger.info(f"URL unreachable, skipping: {title[:50]}")
+    return None
 
 
 class NewsItem:
@@ -339,6 +336,8 @@ def fetch_rss_feeds(max_age_days: int = 14) -> list[NewsItem]:
 
                 final_url = actual_link if actual_link != link else link
                 final_url = _url_with_fallback(final_url, title, feed_config["name"])
+                if not final_url:
+                    continue
 
                 item = NewsItem(
                     title=title,
@@ -516,6 +515,8 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
                         continue
                     final_url = actual_url if actual_url != gn_url else gn_url
                     final_url = _url_with_fallback(final_url, title_text, gn_source)
+                    if not final_url:
+                        continue
 
                     item = NewsItem(
                         title=title_text,
