@@ -145,13 +145,21 @@ def _extract_pub_date_from_page(url: str) -> str | None:
             return None
         html = resp.text[:20000]
 
-        # Try meta tags: og:article:published_time, article:published_time
         for pattern in [
             r'property="article:published_time"\s+content="([^"]+)"',
             r'property="og:article:published_time"\s+content="([^"]+)"',
+            r'content="([^"]+)"\s+property="article:published_time"',
             r'name="publish[_-]?date"\s+content="([^"]+)"',
+            r'name="date"\s+content="([^"]+)"',
+            r'name="DC\.date"\s+content="([^"]+)"',
             r'"datePublished"\s*:\s*"([^"]+)"',
             r'"publishedDate"\s*:\s*"([^"]+)"',
+            r'"date_published"\s*:\s*"([^"]+)"',
+            r'itemprop="datePublished"\s+content="([^"]+)"',
+            r'content="([^"]+)"\s+itemprop="datePublished"',
+            r'"dateCreated"\s*:\s*"([^"]+)"',
+            r'data-publishdate="([^"]+)"',
+            r'name="pubdate"\s+content="([^"]+)"',
         ]:
             m = re.search(pattern, html)
             if m:
@@ -313,23 +321,22 @@ def fetch_rss_feeds(max_age_days: int = 14) -> list[NewsItem]:
                     if url_date != pub_str:
                         pub_str = url_date
 
-                # For aggregator sources, try to get the real publication date
-                if _is_aggregator_source(feed_config["name"]):
-                    real_date = _extract_pub_date_from_page(actual_link or link)
-                    if real_date:
-                        real_year = int(real_date[:4])
-                        if real_year < 2026:
-                            logger.info(
-                                f"Skip aggregator old article (real_date={real_date}): "
-                                f"{title[:50]}"
-                            )
-                            continue
-                        if real_date != pub_str:
-                            logger.info(
-                                f"Aggregator date corrected: {pub_str} -> {real_date}: "
-                                f"{title[:50]}"
-                            )
-                            pub_str = real_date
+                # Always verify date from page meta tags
+                real_date = _extract_pub_date_from_page(actual_link or link)
+                if real_date:
+                    real_year = int(real_date[:4])
+                    if real_year < 2026:
+                        logger.info(
+                            f"Skip old article (real_date={real_date}): "
+                            f"{title[:50]}"
+                        )
+                        continue
+                    if real_date != pub_str:
+                        logger.info(
+                            f"Date corrected: {pub_str} -> {real_date}: "
+                            f"{title[:50]}"
+                        )
+                        pub_str = real_date
 
                 if _url_date_conflicts(actual_link, pub_str):
                     continue
@@ -497,19 +504,18 @@ def _search_google_news_rss(queries: list) -> list[NewsItem]:
                         logger.info(f"Skip old event article: {title_text[:50]}")
                         continue
 
-                    # For aggregator sources via Google News, verify real date
-                    if _is_aggregator_source(gn_source):
-                        real_date = _extract_pub_date_from_page(actual_url or gn_url)
-                        if real_date:
-                            real_year = int(real_date[:4])
-                            if real_year < 2026:
-                                logger.info(
-                                    f"Skip aggregator old (real={real_date}): "
-                                    f"{title_text[:50]}"
-                                )
-                                continue
-                            if real_date != pub_date:
-                                pub_date = real_date
+                    # Always verify date from page meta tags
+                    real_date = _extract_pub_date_from_page(actual_url or gn_url)
+                    if real_date:
+                        real_year = int(real_date[:4])
+                        if real_year < 2026:
+                            logger.info(
+                                f"Skip old article (real={real_date}): "
+                                f"{title_text[:50]}"
+                            )
+                            continue
+                        if real_date != pub_date:
+                            pub_date = real_date
 
                     if _url_date_conflicts(actual_url, pub_date):
                         continue
