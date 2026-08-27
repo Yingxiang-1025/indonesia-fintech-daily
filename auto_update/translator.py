@@ -1,56 +1,98 @@
 """
-Built-in English→Chinese translation for fintech news.
-Uses Google Translate (free, via deep-translator) for full-sentence translation.
-Falls back to clean English if translation unavailable.
+Built-in English/Indonesian→Chinese translation for fintech news.
+Uses googletrans (primary) with deep-translator as fallback.
 """
 import logging
 import time
 
 logger = logging.getLogger(__name__)
 
-_translator = None
+_gt_translator = None
+_deep_translator = None
+_active_backend = None
 
 
-def _get_translator():
-    global _translator
-    if _translator is None:
+def _init_googletrans():
+    global _gt_translator
+    if _gt_translator is None:
+        try:
+            from googletrans import Translator
+            _gt_translator = Translator()
+            logger.info("googletrans initialized")
+        except Exception as e:
+            logger.warning(f"googletrans init failed: {e}")
+    return _gt_translator
+
+
+def _init_deep_translator():
+    global _deep_translator
+    if _deep_translator is None:
         try:
             from deep_translator import GoogleTranslator
-            _translator = GoogleTranslator(source="auto", target="zh-CN")
-            logger.info("Google Translator initialized (auto-detect source)")
+            _deep_translator = GoogleTranslator(source="auto", target="zh-CN")
+            logger.info("deep-translator initialized")
         except Exception as e:
-            logger.warning(f"Failed to init Google Translator: {e}")
-    return _translator
+            logger.warning(f"deep-translator init failed: {e}")
+    return _deep_translator
 
 
 def _has_chinese(text: str) -> bool:
     return any("\u4e00" <= c <= "\u9fff" for c in (text or ""))
 
 
+def _translate_googletrans(text: str) -> str | None:
+    t = _init_googletrans()
+    if not t:
+        return None
+    try:
+        result = t.translate(text[:4500], dest="zh-cn")
+        if result and result.text and _has_chinese(result.text):
+            return result.text
+    except Exception as e:
+        logger.debug(f"googletrans failed: {e}")
+    return None
+
+
+def _translate_deep(text: str) -> str | None:
+    t = _init_deep_translator()
+    if not t:
+        return None
+    try:
+        result = t.translate(text[:4500])
+        if result and _has_chinese(result):
+            return result
+    except Exception as e:
+        logger.debug(f"deep-translator failed: {e}")
+    return None
+
+
 def google_translate(text: str, retries: int = 2) -> str:
-    """Translate English text to Chinese via free Google Translate.
-    Retries if result contains no Chinese characters.
-    Returns original text unchanged on failure."""
+    """Translate to Chinese with multi-backend fallback.
+    Returns original text unchanged on complete failure."""
+    global _active_backend
     if not text or not text.strip():
         return text
     if _has_chinese(text):
         return text
-    translator = _get_translator()
-    if not translator:
-        return text
-    chunk = text[:4500] if len(text) > 4500 else text
+
     for attempt in range(retries + 1):
-        try:
-            result = translator.translate(chunk)
-            time.sleep(0.4)
-            if result and _has_chinese(result):
+        if _active_backend != "deep":
+            result = _translate_googletrans(text)
+            if result:
+                _active_backend = "googletrans"
                 return result
-            if attempt < retries:
-                time.sleep(1)
-        except Exception as e:
-            logger.warning(f"Google Translate attempt {attempt+1} failed: {e}")
-            if attempt < retries:
-                time.sleep(2)
+
+        result = _translate_deep(text)
+        if result:
+            _active_backend = "deep"
+            return result
+
+        if attempt < retries:
+            wait = 1.5 * (attempt + 1)
+            logger.info(f"Translation retry {attempt+1}, waiting {wait}s...")
+            time.sleep(wait)
+
+    logger.warning(f"All translators failed for: {text[:50]}")
     return text
 
 
